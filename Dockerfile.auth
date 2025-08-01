@@ -1,0 +1,11 @@
+FROM supabase/gotrue:v2.157.0
+
+USER root
+
+ADD https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64-v0.6.1.tar.gz /tmp/dockerize.tar.gz
+RUN tar -C /usr/local/bin -xzvf /tmp/dockerize.tar.gz && rm /tmp/dockerize.tar.gz
+
+USER supabase
+
+ENTRYPOINT ["dockerize", "-wait", "tcp://db:5432", "-timeout", "30s"]
+CMD ["gotrue"]

@@ -1,0 +1,3 @@
+# disables anonymous usage statistics
+[browser]
+gatherUsageStats = false 
