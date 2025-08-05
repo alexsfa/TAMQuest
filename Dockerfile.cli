@@ -1,0 +1,15 @@
+FROM alpine:latest
+
+ENV DOCKERIZE_VERSION=v0.6.1
+
+WORKDIR /workspace
+
+COPY wait-and-migrate.sh /usr/local/bin/wait-and-migrate.sh
+COPY supabase/migrations /workspace/migrations
+
+RUN apk add --no-cache curl bash postgresql15-client && \
+    curl -L https://github.com/supabase/cli/releases/latest/download/supabase_$(uname -s)_amd64.tar.gz | \
+    tar -xz -C /usr/local/bin && \
+    chmod +x /usr/local/bin/wait-and-migrate.sh
+
+ENTRYPOINT ["/usr/local/bin/wait-and-migrate.sh"]

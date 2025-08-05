@@ -17,13 +17,13 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./supabase/migrations/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
-
+  
   auth:
     build:
       context: .
@@ -35,7 +35,7 @@ services:
       API_EXTERNAL_URL: http://localhost:9999
       GOTRUE_JWT_SECRET: ${GOTRUE_JWT_SECRET}
       GOTRUE_DB_DRIVER: postgres
-      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@db:5432/tamquest_db
+      DATABASE_URL: ${DATABASE_URL}
       GOTRUE_DISABLE_SIGNUP: "false"
       GOTRUE_MAILER_AUTOCONFIRM: "true"
     depends_on:
@@ -43,13 +43,16 @@ services:
       - app
     restart: always
     
-  migrate:
-    image: supabase/cli:v1.152.0
+  supabase_cli:
+    build:
+      context: .
+      dockerfile: Dockerfile.cli
     working_dir: /workspace
-    volumes:
-      - ./supabase:/workspace
-    entrypoint: ["sh", "-c"]
-    command: ["supabase db push || true"]
+    volumes: 
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
     depends_on:
       - db
+      - auth
   

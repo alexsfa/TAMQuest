@@ -7,5 +7,6 @@ RUN tar -C /usr/local/bin -xzvf /tmp/dockerize.tar.gz && rm /tmp/dockerize.tar.g
 
 USER supabase
 
-ENTRYPOINT ["dockerize", "-wait", "tcp://db:5432", "-timeout", "30s"]
+# -- tells to run the command
+ENTRYPOINT ["dockerize", "-wait", "tcp://db:5432", "-timeout", "30s", "--"] 
 CMD ["gotrue"]
