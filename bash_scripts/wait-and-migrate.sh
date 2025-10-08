@@ -21,3 +21,5 @@ for f in /workspace/migrations/table_inits.sql; do
 done
 
 echo "Migrations applied. Starting main process..."
+
+exec "$@"

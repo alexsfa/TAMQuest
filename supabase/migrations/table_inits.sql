@@ -35,6 +35,20 @@ CREATE TABLE IF NOT EXISTS public.responses (
     UNIQUE (id, questionnaire_id)
 );
 
+-- adding policies about the permissions that a user has on the responses table
+ALTER TABLE public.responses ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY IF NOT EXISTS "Users can insert their responses"
+  ON public.responses
+  FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY IF NOT EXISTS "Users can view their own responses"
+  ON public.responses
+  FOR SELECT
+  USING (auth.uid() = user_id);
+
+
 -- ANSWERS 
 CREATE TABLE IF NOT EXISTS public.answers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

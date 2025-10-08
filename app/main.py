@@ -7,7 +7,7 @@ def main():
     if role == "User":
         st.write("Hello, *World!* :sunglasses:")
     else: 
-        st.write("Hello, nigga")
+        st.write("Hello")
         
 if __name__ == "__main__":
     main()
