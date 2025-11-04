@@ -1,5 +1,6 @@
-streamlit>=1.47.0
+streamlit[auth]>=1.47.0
+watchdog
 sqlalchemy>=2.0.41
-authlib
 streamlit-authenticator
 supabase
+python-dotenv

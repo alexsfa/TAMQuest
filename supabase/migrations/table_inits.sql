@@ -38,16 +38,38 @@ CREATE TABLE IF NOT EXISTS public.responses (
 -- adding policies about the permissions that a user has on the responses table
 ALTER TABLE public.responses ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Users can insert their responses"
-  ON public.responses
-  FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+-- POLICIES
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE policyname = 'Users can insert their responses'
+      AND schemaname = 'public'
+      AND tablename = 'responses'
+  ) THEN
+    EXECUTE 'CREATE POLICY "Users can insert their responses"
+      ON public.responses
+      FOR INSERT
+      WITH CHECK (auth.uid() = user_id)';
+  END IF;
+END
+$$;
 
-CREATE POLICY IF NOT EXISTS "Users can view their own responses"
-  ON public.responses
-  FOR SELECT
-  USING (auth.uid() = user_id);
-
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE policyname = 'Users can view their responses'
+      AND schemaname = 'public'
+      AND tablename = 'responses'
+  ) THEN
+    EXECUTE 'CREATE POLICY "Users can view their responses"
+      ON public.responses
+      FOR SELECT
+      USING (auth.uid() = user_id)';
+  END IF;
+END
+$$;
 
 -- ANSWERS 
 CREATE TABLE IF NOT EXISTS public.answers (

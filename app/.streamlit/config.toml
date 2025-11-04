@@ -1,3 +1,11 @@
 # disables anonymous usage statistics
 [browser]
 gatherUsageStats = false 
+
+[theme]
+base="dark"                # or "dark"
+primaryColor="#ffffffff"      # button & accent color
+backgroundColor="#208de7ff"   # page background
+secondaryBackgroundColor="#7aa8d3ff"
+textColor="#ffffffff"
+font="sans serif" 

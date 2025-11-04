@@ -7,6 +7,7 @@ RUN apk add --no-cache curl && tar -C /usr/local/bin -xzvf /tmp/dockerize.tar.gz
 
 USER supabase
 
-# -- tells to run the command
+# waits until it can successfully connect to the db and then runs gotrue
+# gotrue will apply all the users,schema migration on the db
 ENTRYPOINT ["dockerize", "-wait", "tcp://db:5432", "-timeout", "30s", "--"] 
 CMD ["gotrue"]

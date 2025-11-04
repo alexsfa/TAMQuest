@@ -20,6 +20,24 @@ for f in /workspace/migrations/table_inits.sql; do
   psql "$DATABASE_URL" -f "$f"
 done
 
-echo "Migrations applied. Starting main process..."
+echo "Migrations are successfully applied."
+
+until curl -s http://auth:8081/health > /dev/null; do
+  echo "Waiting for auth service to be ready..."
+  sleep 2
+done
+
+echo "Auth service is ready."
+
+echo "Bootstrapping admin user..."
+if python3 /workspace/scripts/init_admin_user.py; then
+  echo "Admin bootstrap completed successfully!"
+else 
+  echo "Failed to create admin user, continuing..."
+fi
+
+echo "$SERVICE_ROLE_KEY"
+
+echo "Starting the main process.."
 
 exec "$@"
