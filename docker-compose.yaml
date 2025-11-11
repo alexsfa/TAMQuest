@@ -72,7 +72,7 @@ services:
       - |
         trap exit TERM
         while :; do
-          certbot certonly --non-interactive --agree-tos \
+          certbot certrenew --non-interactive --agree-tos \
             --email "$CERT_EMAIL" \
             -a dns-route53 \
             --keep-until-expiring \
