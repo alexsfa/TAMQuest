@@ -36,8 +36,6 @@ else
   echo "Failed to create admin user, continuing..."
 fi
 
-echo "$SERVICE_ROLE_KEY"
-
 echo "Starting the main process.."
 
 exec "$@"
