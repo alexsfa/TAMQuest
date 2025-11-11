@@ -71,11 +71,6 @@ services:
       - -c 
       - |
         trap exit TERM
-        certbot certonly --non-interactive --agree-tos \
-          --email "$CERT_EMAIL" \
-          -a dns-route53 \
-          --keep-until-expiring \
-          -d tamquest.click
         while :; do
           certbot renew --non-interactive
           echo 'Reload nginx service, if certificate gets renewal'
