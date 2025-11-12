@@ -41,7 +41,7 @@ services:
     environment:
       GOTRUE_SITE_URL: https://tamquest.click
       API_EXTERNAL_URL: https://tamquest.click
-      GOTRUE_JWT_SECRET: https://tamquest.click/auth/v1
+      GOTRUE_JWT_SECRET: ${GOTRUE_JWT_SECRET}
       GOTRUE_DB_DRIVER: postgres
       GOTRUE_DB_DATABASE_URL: ${GOTRUE_AUTH_SCHEMA_URL}
       GOTRUE_DISABLE_SIGNUP: "false"
