@@ -5,14 +5,13 @@ WORKDIR /workspace
 COPY ./bash_scripts/wait-and-migrate.sh /usr/local/bin/wait-and-migrate.sh
 COPY supabase/migrations /workspace/migrations
 COPY app/scripts/init_admin_user.py /workspace/scripts/init_admin_user.py
+COPY ./.supabase/project.toml /workspace/.supabase
 
 RUN apt-get update && apt-get install -y curl bash postgresql-client && rm -rf /var/lib/apt/lists/* && \
     ln -sf /usr/bin/python3 /usr/bin/python && \
     pip install --upgrade pip && \
-    pip install supabase python-dotenv 
-    
-
-RUN   curl -L https://github.com/supabase/cli/releases/latest/download/supabase_$(uname -s)_amd64.tar.gz | \
+    pip install supabase python-dotenv && \
+    curl -L https://github.com/supabase/cli/releases/latest/download/supabase_$(uname -s)_amd64.tar.gz | \
     tar -xz -C /usr/local/bin && \
     chmod +x /usr/local/bin/wait-and-migrate.sh && \
     chmod +x ./scripts/init_admin_user.py
