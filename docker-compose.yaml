@@ -22,7 +22,7 @@ services:
       context: .
       dockerfile: ./dockerfiles/Dockerfile.app
     environment:
-      SUPABASE_URL: ${SUPABASE_URL:-http://api-gateway:8000}
+      SUPABASE_URL: ${SUPABASE_URL:-https://tamquest.click}
       SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
     ports:
       - "8051:8051"
@@ -39,9 +39,9 @@ services:
     ports:
       - "8081:8081"
     environment:
-      GOTRUE_SITE_URL: http://localhost:8081
-      API_EXTERNAL_URL: http://localhost:8081
-      GOTRUE_JWT_SECRET: ${GOTRUE_JWT_SECRET}
+      GOTRUE_SITE_URL: https://tamquest.click
+      API_EXTERNAL_URL: https://tamquest.click
+      GOTRUE_JWT_SECRET: https://tamquest.click/auth/v1
       GOTRUE_DB_DRIVER: postgres
       GOTRUE_DB_DATABASE_URL: ${GOTRUE_AUTH_SCHEMA_URL}
       GOTRUE_DISABLE_SIGNUP: "false"
