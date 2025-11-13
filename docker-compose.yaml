@@ -39,8 +39,8 @@ services:
     ports:
       - "8081:8081"
     environment:
-      GOTRUE_SITE_URL: https://tamquest.click
-      API_EXTERNAL_URL: https://tamquest.click
+      GOTRUE_SITE_URL: http://auth:8081
+      API_EXTERNAL_URL: http://auth:8081
       GOTRUE_JWT_SECRET: ${GOTRUE_JWT_SECRET}
       GOTRUE_DB_DRIVER: postgres
       GOTRUE_DB_DATABASE_URL: ${GOTRUE_AUTH_SCHEMA_URL}
