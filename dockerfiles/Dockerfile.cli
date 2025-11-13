@@ -5,7 +5,6 @@ WORKDIR /workspace
 COPY ./bash_scripts/wait-and-migrate.sh /usr/local/bin/wait-and-migrate.sh
 COPY supabase/migrations /workspace/migrations
 COPY app/scripts/init_admin_user.py /workspace/scripts/init_admin_user.py
-COPY ./.supabase/project.toml /workspace/.supabase
 
 RUN apt-get update && apt-get install -y curl bash postgresql-client && rm -rf /var/lib/apt/lists/* && \
     ln -sf /usr/bin/python3 /usr/bin/python && \
