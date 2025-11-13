@@ -1,58 +1,77 @@
-from dotenv import load_dotenv
 import os
-
-from supabase import create_client, Client
+from dotenv import load_dotenv
 import streamlit as st
+from supabase import create_client, Client
+import streamlit.components.v1 as components
 
+# Loads the environment variables
 load_dotenv()
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
+BASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SERVICE_ROLE_KEY")
 
-def init_supabase() -> Client:
-    return create_client(SUPABASE_URL, SUPABASE_KEY)
+REDIRECT_URI = f"{BASE_URL}/auth/v1/callback"
 
-supabase = init_supabase()
+supabase: Client = create_client(BASE_URL, SUPABASE_KEY)
 
+if "user" not in st.session_state:
+    st.session_state["user"] = None
 
+def login_user(email: str, password: str):
+    try:
+        user = supabase.auth.sign_in_with_password({"email": email, "password": password})
+        st.session_state["user"] = user
+        st.success(f"Logged in as {user.user.email}")
+    except Exception as e:
+        st.error(f"Log in has failed:{e}")
 
-def login_screen():
-    st.header("This app is private.")
-    st.subheader("Please log in.")
+def signup_user(email:str, password: str):
+    try:
+        supabase.auth.sign.up({
+            "email": email,
+            "password": password,
+            "options": {"data": {"role": "user"}}
+        })
+        st.success("Signed up successfully. Please check your email for confirmation.")
+    except Exception as e:
+        st.error(f"Sign up has failed: {e}")
+
+def logout_user():
+    st.session_state["user"] = None
+    st.success("Logged out")
+
+def google_oauth_login():
+    oauth_url = "f{BASE_URL}/auth/v1/authorize?provider=google&redirect_to={REDIRECT_URI}"
+    js = f"""
+    <script type="text/javascript">
+        window.location.href = "{oauth_url}";
+    </script>
+    """
+    components.html(js)
+
+# -----------------------------------------
+# Below starts the UI of the app
+# -----------------------------------------
+
+st.title("Private App Login")
+
+if st.session_state["user"] is None:
+    st.header("Please log in")
 
     auth_action = st.selectbox("Choose action", ["Login", "Sign up"])
     email = st.text_input("Email")
     password = st.text_input("Password", type="password")
 
-    if auth_action == "Sign up":
-        if st.button("Sign Up"):
-            try:
-                new_user = supabase.auth.sign_up({
-                    "email": email, 
-                    "password": password,
-                    "options": {
-                        "data": {"role": "user"} 
-                    }
-                    })
-                st.success("Signed up successfully. Please check your email.")
-            except Exception as e:
-                st.error(f"Error signing up: {e}")
+    if auth_action == "Sign up" and st.button("Sign Up"):
+        signup_user(email, password)
+    elif auth_action == "Login" and st.button("Login"):
+        login_user(email, password)
 
-    elif auth_action == "Login":
-        if st.button("Login"):
-            try:
-                user = supabase.auth.sign_in_with_password({"email": email, "password": password})
-                st.session_state['user'] = user
-                st.success(f"Logged in as {user.user.email}")
-            except Exception as e:
-                    st.error(f"Login failed: {e}")
-
-
-    st.button("Log in with Google", on_click=st.login)
-
-
-if not st.user.is_logged_in:
-    login_screen()
+    st.markdown("---")
+    st.subheader("Or log in with Google")
+    if st.button("Log in with Google"):
+        google_oauth_login()
 else:
-    st.button("Log out", on_click=st.logout)
-
+    st.success(f"Logged in as {st.session_state['user'].user.email}")
+    if st.button("Log out"):
+        logout_user()
