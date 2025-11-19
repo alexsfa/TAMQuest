@@ -1,4 +1,5 @@
 import os
+from menu import menu
 from dotenv import load_dotenv
 import streamlit as st
 from supabase import create_client, Client
@@ -13,8 +14,23 @@ SUPABASE_KEY = os.getenv("ANON_KEY")
 BASE_URL = os.getenv("SUPABASE_URL")
 supabase: Client = create_client(BASE_URL, SUPABASE_KEY)
 
-if "user" not in st.session_state:
-    st.session_state["user"] = None
+if "role" not in st.session_state:
+    st.session_state.role = None
+
+st.session_state._role = st.session_state.role
+
+def set_role():
+    st.session_state.role = st.session_state._role
+
+st.selectbox(
+    "Select your role:",
+    [None, "user", "admin"],
+    key="_role",
+    on_change=set_role,
+)
+
+menu()
+
 
 def login_user(email: str, password: str):
     try:
@@ -24,8 +40,10 @@ def login_user(email: str, password: str):
     except Exception as e:
         st.error(f"Log in has failed:{e}")
 
-def signup_user(email:str, password: str, name:str, birthdate:str):
+def signup_user(email:str, password: str, name:str, birthdate):
     try:
+        birthdate_str = birthdate.isoformat()
+        st.write(birthdate_str)
         supabase.auth.sign_up({
             "email": email,
             "password": password,
@@ -33,7 +51,7 @@ def signup_user(email:str, password: str, name:str, birthdate:str):
                 "data": { 
                     "role": "user",
                     "name": name,
-                    "birthdate": birthdate
+                    "birthdate": birthdate_str
                     }
                 }
             })
@@ -66,7 +84,6 @@ if st.session_state["user"] is None:
                         min_value=date(1900, 1, 1))
 
         if st.button("Sign up"):
-            birthdate_str = birthdate.isoformat()
             signup_user(email, password, name, birthdate)
 
     elif auth_action == "Login" and st.button("Login"):

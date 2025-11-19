@@ -9,3 +9,6 @@ backgroundColor="#208de7ff"   # page background
 secondaryBackgroundColor="#7aa8d3ff"
 textColor="#000000ff"
 font="sans serif" 
+
+[client]
+showSidebarNavigation = false

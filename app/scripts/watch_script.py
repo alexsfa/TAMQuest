@@ -6,7 +6,7 @@ import os
 import signal
 
 # command that starts streamlit
-STREAMLIT_CMD = ["streamlit", "run", "main.py", "--server.port=8051", "--server.address=0.0.0.0"]
+STREAMLIT_CMD = ["streamlit", "run", "app.py", "--server.port=8051", "--server.address=0.0.0.0"]
 
 path_to_watch = "/home/streamlit-user/.streamlit"
 
