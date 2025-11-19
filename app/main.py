@@ -3,15 +3,14 @@ from dotenv import load_dotenv
 import streamlit as st
 from supabase import create_client, Client
 import streamlit.components.v1 as components
+from datetime import date
 
 # Loads the environment variables
 load_dotenv()
 
+SUPABASE_KEY = os.getenv("ANON_KEY")
+
 BASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SERVICE_ROLE_KEY")
-
-REDIRECT_URI = f"{BASE_URL}/auth/v1/callback"
-
 supabase: Client = create_client(BASE_URL, SUPABASE_KEY)
 
 if "user" not in st.session_state:
@@ -25,13 +24,19 @@ def login_user(email: str, password: str):
     except Exception as e:
         st.error(f"Log in has failed:{e}")
 
-def signup_user(email:str, password: str):
+def signup_user(email:str, password: str, name:str, birthdate:str):
     try:
-        supabase.auth.sign.up({
+        supabase.auth.sign_up({
             "email": email,
             "password": password,
-            "options": {"data": {"role": "user"}}
-        })
+            "options": {
+                "data": { 
+                    "role": "user",
+                    "name": name,
+                    "birthdate": birthdate
+                    }
+                }
+            })
         st.success("Signed up successfully. Please check your email for confirmation.")
     except Exception as e:
         st.error(f"Sign up has failed: {e}")
@@ -39,15 +44,6 @@ def signup_user(email:str, password: str):
 def logout_user():
     st.session_state["user"] = None
     st.success("Logged out")
-
-def google_oauth_login():
-    oauth_url = "f{BASE_URL}/auth/v1/authorize?provider=google&redirect_to={REDIRECT_URI}"
-    js = f"""
-    <script type="text/javascript">
-        window.location.href = "{oauth_url}";
-    </script>
-    """
-    components.html(js)
 
 # -----------------------------------------
 # Below starts the UI of the app
@@ -62,15 +58,20 @@ if st.session_state["user"] is None:
     email = st.text_input("Email")
     password = st.text_input("Password", type="password")
 
-    if auth_action == "Sign up" and st.button("Sign Up"):
-        signup_user(email, password)
+    if auth_action == "Sign up":
+        name = st.text_input("Name")
+        birthdate = st.date_input(
+                        "Birthdate", 
+                        max_value=date.today(),
+                        min_value=date(1900, 1, 1))
+
+        if st.button("Sign up"):
+            birthdate_str = birthdate.isoformat()
+            signup_user(email, password, name, birthdate)
+
     elif auth_action == "Login" and st.button("Login"):
         login_user(email, password)
 
-    st.markdown("---")
-    st.subheader("Or log in with Google")
-    if st.button("Log in with Google"):
-        google_oauth_login()
 else:
     st.success(f"Logged in as {st.session_state['user'].user.email}")
     if st.button("Log out"):
