@@ -2,6 +2,13 @@ from datetime import date
 import streamlit as st
 from scripts import authentication_functions as auth
 
+load_dotenv()
+
+SUPABASE_KEY = os.getenv("ANON_KEY")
+
+BASE_URL = os.getenv("SUPABASE_URL")
+supabase: Client = create_client(BASE_URL, SUPABASE_KEY)
+
 st.header("This app is private.")
 st.subheader("Please log in.")
 

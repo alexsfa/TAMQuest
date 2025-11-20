@@ -1,5 +1,6 @@
 import streamlit as st
 from datetime import date
+from supabase import create_client, Client
 
 def login_user(email: str, password: str):
     try:

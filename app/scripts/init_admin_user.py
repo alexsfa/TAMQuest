@@ -26,7 +26,7 @@ def ensure_admin_exists():
             "email": ADMIN_EMAIL,
             "password": ADMIN_PASSWORD,
             "email_confirm": True,
-            "user_metadata": {"role": "admin"},
+            "app_metadata": {"role": "admin"},
         }
     )
 

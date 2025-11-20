@@ -35,10 +35,58 @@ CREATE TABLE IF NOT EXISTS public.responses (
     UNIQUE (id, questionnaire_id)
 );
 
--- adding policies about the permissions that a user has on the responses table
+-- RLS prevents anyone from reading, inserting, updating, deleting rows until a policy explicitly allows it
 ALTER TABLE public.responses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.questionnaires ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.questions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.question_options ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.answers ENABLE ROW LEVEL SECURITY;
+
+-- app_metadata.role field is included in all JWT claims
+UPDATE auth.config
+SET jwt_custom_claims = jsonb_build_object(
+  'role', 'app_metadata ->> ''role'''
+)
+WHERE id = 1;
 
 -- POLICIES
+
+CREATE POLICY "All authenticated users can view questionnaires"
+ON public.questionnaires
+FOR SELECT
+USING (auth.role() = 'authenticated');
+
+CREATE POLICY "All authenticated users can view questions"
+ON public.questions
+FOR SELECT
+USING (auth.role() = 'authenticated');
+
+CREATE POLICY "All authenticated users can view question options"
+ON public.question_options
+FOR SELECT
+USING (auth.role() = 'authenticated');
+
+
+CREATE POLICY "Admins can manage questionnaires"
+ON public.questionnaires
+FOR ALL
+USING (auth.jwt() ->> 'role' = 'admin')
+WITH CHECK (auth.jwt() ->> 'role' = 'admin');
+
+CREATE POLICY "Admins can manage questions"
+ON public.questions
+FOR ALL
+USING (auth.jwt() ->> 'role' = 'admin')
+WITH CHECK (auth.jwt() ->> 'role' = 'admin');
+
+CREATE POLICY "Admins can manage question options"
+ON public.question_options
+FOR ALL
+USING (auth.jwt() ->> 'role' = 'admin')
+WITH CHECK (auth.jwt() ->> 'role' = 'admin');
+--
+
+
 DO $$
 BEGIN
   IF NOT EXISTS (
