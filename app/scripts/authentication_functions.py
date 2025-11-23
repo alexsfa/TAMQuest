@@ -2,15 +2,17 @@ import streamlit as st
 from datetime import date
 from supabase import create_client, Client
 
-def login_user(email: str, password: str):
+def login_user(supabase, email: str, password: str):
     try:
         user = supabase.auth.sign_in_with_password({"email": email, "password": password})
+        role = user.user.app_metadata.get("role", None)
+        st.session_state["role"] = role
         st.session_state["user"] = user
-        st.success(f"Logged in as {user.user.email}")
+        st.switch_page("app.py")
     except Exception as e:
         st.error(f"Log in has failed:{e}")
 
-def signup_user(email:str, password: str, name:str, birthdate):
+def signup_user(supabase, email:str, password: str, name:str, birthdate):
     try:
         birthdate_str = birthdate.isoformat()
         st.write(birthdate_str)

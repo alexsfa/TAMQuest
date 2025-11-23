@@ -1,13 +1,12 @@
-from datetime import date
+import os
 import streamlit as st
+from datetime import date
+from dotenv import load_dotenv
 from scripts import authentication_functions as auth
+from scripts import supabase_client 
+from supabase import create_client, Client
 
-load_dotenv()
-
-SUPABASE_KEY = os.getenv("ANON_KEY")
-
-BASE_URL = os.getenv("SUPABASE_URL")
-supabase: Client = create_client(BASE_URL, SUPABASE_KEY)
+supabase_client.client_check
 
 st.header("This app is private.")
 st.subheader("Please log in.")
@@ -23,9 +22,8 @@ if auth_action == "Sign up":
                         max_value=date.today(),
                         min_value=date(1900, 1, 1))
     if st.button("Sign Up"):
-        if st.button("Sign up"):
-            auth.signup_user(email, password, name, birthdate)
+        auth.signup_user(supabase, email, password, name, birthdate)
 
 elif auth_action == "Login":
     if st.button("Login"):
-        auth.login_user(email, password)
+        auth.login_user(supabase, email, password)
