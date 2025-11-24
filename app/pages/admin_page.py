@@ -5,6 +5,8 @@ from scripts.menu import menu
 
 current_page = "admin_page"
 
+client = supabase_client.get_client()
+
 additional_question_configs = [
     ("Technology support questions", "Technology Support"),
     ("User satisfaction questions", "User Satisfaction"),
@@ -23,14 +25,64 @@ radio_options = ["Yes", "No"]
 
 def preview_questionnaire():
     if st.session_state.get("app_name").strip() == "":
-        st.warning("Please enter an app name before submitting.")
+        st.warning("Please enter an app name.")
         return
+
+    if not st.session_state.get("q_details").strip() == "":
+        st.write( f"Details: { st.session_state.q_details }")
+
     st.write(generate_tam_questions(ESSENTIAL_TAM_QUESTIONS, st.session_state.app_name))
     if st.session_state["add_questions"]:
         st.write(generate_additional_tam_questions(ADDITIONAL_TAM_QUESTIONS, st.session_state.app_name))
 
 def submit_questionnaire():
-    st.success("Questionnaire created!")
+
+    if st.session_state.get("app_name").strip() == "":
+        st.warning("Please enter an app name.")
+        return
+
+    if not st.session_state.get("q_details").strip() == "":
+        questionnaire_details = st.session_state.q_details 
+    else:
+        questionnaire_details = None
+
+    questionnaire_insert = client.table("questionnaires").insert({
+        "title": f"TAM Questionnaire {st.session_state.app_name}",
+        "details": questionnaire_details,
+        "created_by": st.session_state["user"].user.id
+    }).execute()
+
+    if not questionnaire_insert.data:
+        raise Exception("Failed to create quesytionnaire")
+
+    questionnaire_id = questionnaire_insert.data[0]["id"]
+
+    questions = generate_tam_questions(ESSENTIAL_TAM_QUESTIONS, st.session_state.app_name)
+
+    if "add_questions" in st.session_state and st.session_state["add_questions"]:
+        questions.update(generate_additional_tam_questions(ADDITIONAL_TAM_QUESTIONS, st.session_state.app_name))
+
+    for category, qs in questions.items():
+        for position, question_text in enumerate(qs):
+            question_insert = client.table("questions").insert({
+                "questionnaire_id": questionnaire_id,
+                "question_text": question_text,
+                "position": position
+            }).execute()
+
+        if not question_insert.data:
+            raise Execption("Failed to insert question.")
+
+        question_id = question_insert.data[0]["id"]
+
+        for option_index, option in enumerate(LIKERT_OPTIONS):
+            client.table("answer_options").insert({
+                "question_id": question_id,
+                "option_text": option_text,
+                "position": option_index
+            }).execute
+
+    return questionnaire_id
 
 if __name__ == "__main__":
 
@@ -47,7 +99,7 @@ if __name__ == "__main__":
 
         st.session_state.last_page = current_page
     
-    st.title("Welcome to the admin page")
+    st.title("Welcome to the admin page") 
 
     if "create_questionnaire" not in st.session_state:
         st.session_state.create_questionnaire = False
@@ -56,26 +108,52 @@ if __name__ == "__main__":
         st.session_state.create_questionnaire = not st.session_state.create_questionnaire
 
     if st.session_state.create_questionnaire:
-        app_name = st.text_input("The name of the app", key="app_name")
+        st.text_input("The name of the app", key="app_name")
+
+        st.text_area("Enter details about the questionnaire", height=150, key="q_details")
 
         if "add_questions" not in st.session_state:
             st.session_state.add_questions = False
 
-        if st.button("Add additional questions"):
-            st.session_state.add_questions = not st.session_state.add_questions
+        if "show_preview" not in st.session_state:
+            st.session_state.show_preview = False
 
-        if st.session_state.add_questions:
-            cols = st.columns(2)
+        button_1, button_2 = st.columns(2)
+        with button_1:
+            if st.button("Add additional questions"):
+                st.session_state.add_questions = not st.session_state.add_questions
 
-            for i, (label, key) in enumerate(additional_question_configs):
-                col = cols[i % 2]
-                col.checkbox(label, key=key)
+        with button_2:
+            if st.button("Preview Questionnaire"):
+                st.session_state.show_preview = not st.session_state.show_preview
 
-        if st.button("Preview Questionnaire"):
-            preview_questionnaire()
+        additional_questions_container = st.container()
+ 
+        with additional_questions_container:
+            if st.session_state.add_questions:
+                cols = st.columns(2)
+
+                for i, (label, key) in enumerate(additional_question_configs):
+                    col = cols[i % 2]
+                    col.checkbox(label, key=key)
+            else:
+                additional_questions_container.empty()
+
+        questionnaire_preview_container = st.container()
+
+        with questionnaire_preview_container:
+            if st.session_state.show_preview:
+                preview_questionnaire()
 
         if st.button("Submit Questionnaire"):
-            submit_questionnaire()
+                submit_questionnaire()
+
+
+            
+
+
+        
+        
 
 
 
