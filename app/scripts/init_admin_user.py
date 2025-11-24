@@ -10,8 +10,9 @@ ADMIN_PASSWORD = os.getenv("APP_ADMIN_PASSWORD")
 if not GOTRUE_URL or not SUPABASE_SERVICE_ROLE_KEY:
     raise RuntimeError("Missing GOTRUE_URL or SUPABASE_SERVICE_ROLE_KEY environment variables.")
 
+admin = SyncGoTrueAdminAPI(url=GOTRUE_URL, headers={"Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}"})
+
 def ensure_admin_exists():
-    admin = SyncGoTrueAdminAPI(url=GOTRUE_URL, headers={"Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}"})
 
     users = admin.list_users()
     admin_exists = any(u["email"] == ADMIN_EMAIL for u in users)
