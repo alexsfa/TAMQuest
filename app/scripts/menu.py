@@ -1,25 +1,31 @@
 import streamlit as st
-from datetime import date
+import streamlit as st
+from scripts.authentication_functions import logout_user
 
-def authenticated_menu():
-    st.sidebar.page_link("app.py", label="Switch accounts")
-    st.sidebar.page_link("pages/user.py", label="Profile")
-    if st.session_state.role in ["admin"]:
-        st.sidebar.page_link("pages/admin.py", label="Manage users")
+MENU_CONFIG = {
+    "user": [
+        {"label": "Main page", "page": "app.py"},
+        {"label": "Profile", "page": "pages/profile_page.py"},
+    ],
+    "admin": [
+        {"label": "Main page", "page": "app.py"},
+        {"label": "Profile", "page": "pages/profile_page.py"},
+        {"label": "Admin activities", "page": "pages/admin_page.py"},
+    ]
+}
 
-def unauthenticated_menu():
-    st.sidebar.page_link("app.py", label="Gain access")
+# The authenticated_menu() function renders the sidebar menu based on the user's role
+def authenticated_menu(supabase_client):
+    role = st.session_state.role
+    for item in MENU_CONFIG.get(role, []):
+        st.sidebar.page_link(item["page"], label=item["label"])
+    st.sidebar.button("Logout", on_click= lambda: logout_user(supabase_client))
 
-# The menu function check if the session's user is authenticated,
-# so it can show the appropriate for the occasion navigation menu.
-def menu():
-    if "role" not in st.session_state or st.session_state.role is None:
-        unauthenticated_menu()
+# The menu() function checks if user is authenticated.
+# The unauthenticated users get redirect to the login page.
+# For the authenticated users, the function calls the authenticated_menu function.
+def menu(supabase_client):
+    if "role" not in st.session_state:
+        st.switch_page("pages/login_page.py")
         return
-    authenticated_menu()
-
-# The menu_with_redirect function redirects the unaunthenticated users to the main page
-def menu_with_redirect():
-    if "role" not in st.session_state or st.session_state.role is None:
-        st.switch_page("app")
-    menu()
+    authenticated_menu(supabase_client)

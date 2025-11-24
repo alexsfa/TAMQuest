@@ -37,5 +37,12 @@ def ensure_admin_exists():
         print(f"⚠️ Failed to create admin user: {response}")
         sys.exit(1)
 
+def create_admin(user_id: str):
+    response = admin.update_user_by_id(
+        user_id,
+        {"app_metadata": {"role": "admin"}}
+    )
+    return response
+
 if __name__ == "__main__":
     ensure_admin_exists()

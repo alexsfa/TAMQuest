@@ -1,19 +1,20 @@
 import streamlit as st
 from dotenv import load_dotenv
+from scripts import supabase_client 
 from scripts.menu import menu
-
-
 
 # The environment vars are getting loaded for the whole process of the app
 load_dotenv()
 
-if "role" not in st.session_state:
-    st.switch_page("pages/login_page.py")
+client = supabase_client.get_client()
 
 # -----------------------------------------
 # Below starts the UI of the app
 # -----------------------------------------
 
-st.title("Welcome to TAMQuest")
+if __name__ == "__main__":
+    client = supabase_client.get_client()
+    menu(client)
 
-menu()
+    st.title("Welcome to TAMQuest")
+    st.write(st.session_state)
