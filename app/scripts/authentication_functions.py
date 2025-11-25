@@ -7,7 +7,7 @@ def login_user(supabase_client, email: str, password: str):
         user = supabase_client.auth.sign_in_with_password({"email": email, "password": password})
         role = user.user.app_metadata.get("role", "user")
         st.session_state["role"] = role
-        st.session_state["user"] = user
+        st.session_state["user_id"] = user.user.id
         st.switch_page("app.py")
     except Exception as e:
         st.error(f"Log in has failed:{e}")

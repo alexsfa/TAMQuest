@@ -121,7 +121,7 @@ BEGIN
     EXECUTE 'CREATE POLICY "Questionnaires can be submitted by admins"
       ON public.questionnaires
       FOR INSERT
-      WITH CHECK (auth.jwt() ->> ''role'' = ''admin'');'
+      WITH CHECK (auth.jwt() -> ''app_metadata'' ->> ''role'' = ''admin'');'
   END IF;
 END
 $$;
@@ -137,7 +137,7 @@ BEGIN
     EXECUTE 'CREATE POLICY "Questionnaires can be deleted by admins"
       ON public.questionnaires
       FOR DELETE
-      USING (auth.jwt() ->> ''role'' = ''admin'');'
+      USING (auth.jwt() -> ''app_metadata'' ->> ''role'' = ''admin'');'
   END IF;
 END
 $$;
@@ -155,7 +155,7 @@ BEGIN
     EXECUTE 'CREATE POLICY "Questions of the questionnaires can be submitted by admins"
       ON public.questions
       FOR INSERT
-      WITH CHECK (auth.jwt() ->> ''role'' = ''admin'');'
+      WITH CHECK (auth.jwt() -> ''app_metadata'' ->> ''role'' = ''admin'');'
   END IF;
 END
 $$;
@@ -171,7 +171,7 @@ BEGIN
     EXECUTE 'CREATE POLICY "Questions of the questionnaires can be deleted admins"
       ON public.questions
       FOR DELETE
-      USING (auth.jwt() ->> ''role'' = ''admin'');'
+      USING (auth.jwt() -> ''app_metadata'' ->> ''role'' = ''admin'');'
   END IF;
 END
 $$;
@@ -189,7 +189,7 @@ BEGIN
     EXECUTE 'CREATE POLICY "Options as answers can be submitted by admins"
       ON public.answer_options
       FOR INSERT
-      WITH CHECK (auth.jwt() ->> ''role'' = ''admin'');'
+      WITH CHECK (auth.jwt() -> ''app_metadata'' ->> ''role'' = ''admin'');'
   END IF;
 END
 $$;
@@ -205,7 +205,7 @@ BEGIN
     EXECUTE 'CREATE POLICY "Options as answers can be deleted by admins"
       ON public.answer_options
       FOR DELETE
-      USING (auth.jwt() ->> ''role'' = ''admin'');'
+      USING (auth.jwt() -> ''app_metadata'' ->> ''role'' = ''admin'');'
   END IF;
 END
 $$;
@@ -223,7 +223,7 @@ BEGIN
     EXECUTE 'CREATE POLICY "Admins can view all responses"
       ON public.responses
       FOR SELECT
-      USING (auth.jwt() ->> ''role'' = ''admin'');'
+      USING (auth.jwt() -> ''app_metadata'' ->> ''role'' = ''admin'');'
   END IF;
 END
 $$;
@@ -239,7 +239,7 @@ BEGIN
     EXECUTE 'CREATE POLICY "Admins can delete all responses"
       ON public.responses
       FOR DELETE
-      USING (auth.jwt() ->> ''role'' = ''admin'');'
+      USING (auth.jwt() -> ''app_metadata'' ->> ''role'' = ''admin'');'
   END IF;
 END
 $$;
@@ -335,7 +335,7 @@ BEGIN
   ) THEN EXECUTE 'CREATE POLICY "Admins can view all answers"
       ON public.answers
       FOR SELECT
-      USING (auth.jwt() ->> ''role'' = ''admin'');';
+      USING (auth.jwt() -> ''app_metadata'' ->> ''role'' = ''admin'');';
   END IF;
 END
 $$;

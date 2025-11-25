@@ -41,15 +41,17 @@ def submit_questionnaire():
         st.warning("Please enter an app name.")
         return
 
-    if not st.session_state.get("q_details").strip() == "":
-        questionnaire_details = st.session_state.q_details 
+    q_details = st.session_state.get("q_details", "")
+
+    if q_details and q_details.strip():
+        questionnaire_details = q_details.strip()
     else:
         questionnaire_details = None
 
     questionnaire_insert = client.table("questionnaires").insert({
-        "title": f"TAM Questionnaire {st.session_state.app_name}",
+        "title": f"TAM Questionnaire for {st.session_state.app_name}",
         "details": questionnaire_details,
-        "created_by": st.session_state["user"].user.id
+        "created_by": st.session_state.user_id
     }).execute()
 
     if not questionnaire_insert.data:
@@ -147,15 +149,3 @@ if __name__ == "__main__":
 
         if st.button("Submit Questionnaire"):
                 submit_questionnaire()
-
-
-            
-
-
-        
-        
-
-
-
-
-
