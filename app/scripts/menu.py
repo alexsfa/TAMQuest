@@ -14,12 +14,23 @@ MENU_CONFIG = {
     ]
 }
 
+def sign_out(supabase_client):
+    logout_user(supabase_client)
+
+    for key in ["user", "role"]:
+        if key in st.session_state:
+            del st.session_state[key]
+
+    st.switch_page("pages/login_page.py")
+    st.rerun()
+    
+
 # The authenticated_menu() function renders the sidebar menu based on the user's role
 def authenticated_menu(supabase_client):
     role = st.session_state.role
     for item in MENU_CONFIG.get(role, []):
         st.sidebar.page_link(item["page"], label=item["label"])
-    st.sidebar.button("Logout", on_click= lambda: logout_user(supabase_client))
+    st.sidebar.button("Sign out", on_click= lambda: sign_out(supabase_client))
 
 # The menu() function checks if user is authenticated.
 # The unauthenticated users get redirect to the login page.

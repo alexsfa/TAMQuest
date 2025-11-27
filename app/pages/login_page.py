@@ -27,4 +27,10 @@ if __name__ == "__main__":
 
     elif auth_action == "Login":
         if st.button("Login"):
-            auth.login_user(client, email, password)
+            logged_user = auth.login_user(client, email, password)
+
+            if logged_user:
+                st.session_state["role"] = logged_user.user.app_metadata.get("role", "user")
+                st.session_state["user_id"] = logged_user.user.id
+                
+                st.switch_page("app.py")
