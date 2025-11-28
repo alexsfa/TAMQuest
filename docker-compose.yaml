@@ -123,6 +123,9 @@ services:
     ports:
       - "3001:3001"
     environment:
+      SUPABASE_URL: ${SUPABASE_URL:-https://tamquest.click}
+      SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+      ANON_KEY: ${ANON_KEY}
       PGRST_JWT_SECRET: ${GOTRUE_JWT_SECRET}
       DATABASE_URL: ${DATABASE_URL}
       DB_USER: postgres
