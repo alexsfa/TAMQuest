@@ -20,7 +20,7 @@ def signup_user(supabase_client, email:str, password: str, name:str, birthdate):
                 "data": { 
                     "role": "user",
                     "name": name,
-                    "birthdate": birthdate_str
+                    "birthdate": birthdate_str,
                     }
                 }
             })

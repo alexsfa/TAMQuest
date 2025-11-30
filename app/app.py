@@ -21,3 +21,6 @@ if __name__ == "__main__":
 
     st.title("Welcome to TAMQuest")
     st.write(st.session_state)
+
+    qs = client.table("questionnaires").select("*").execute()
+    st.json(qs)

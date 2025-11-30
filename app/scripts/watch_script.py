@@ -2,6 +2,7 @@ import subprocess
 import time
 from watchdog.observers.polling import PollingObserver as Observer
 from watchdog.events import FileSystemEventHandler
+from scripts.init_admin_user import ensure_admin_exists
 import os
 import signal
 
@@ -9,7 +10,6 @@ import signal
 STREAMLIT_CMD = ["streamlit", "run", "app.py", "--server.port=8051", "--server.address=0.0.0.0"]
 
 path_to_watch = "/home/streamlit-user/.streamlit"
-
 
 # StreamlitReloader class is responsible for the start/restart of Streamlit
 class StreamlitReloader(FileSystemEventHandler):

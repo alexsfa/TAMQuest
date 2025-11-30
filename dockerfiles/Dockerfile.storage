@@ -1,8 +1,0 @@
-FROM supabase/storage-api:latest
-
-COPY ./bash_scripts/wait-for-gotrue.sh wait-for-gotrue.sh
-RUN apk add --no-cache curl && \
-    chmod +x wait-for-gotrue.sh
-
-# Overrides the default CMD to wait for GoTrue before starting the storage service
-CMD ["sh", "-c", "./wait-for-gotrue.sh && npm run start"]

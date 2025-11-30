@@ -2,6 +2,7 @@ import streamlit as st
 from scripts.generate_questionnaires import generate_tam_questions, generate_additional_tam_questions,ESSENTIAL_TAM_QUESTIONS, ADDITIONAL_TAM_QUESTIONS
 from scripts import supabase_client 
 from scripts.menu import menu
+import uuid
 
 current_page = "admin_page"
 
@@ -51,11 +52,11 @@ def submit_questionnaire():
     questionnaire_insert = client.table("questionnaires").insert({
         "title": f"TAM Questionnaire for {st.session_state.app_name}",
         "details": questionnaire_details,
-        "created_by": st.session_state.user_id
+        "created_by": st.session_state["user_id"]
     }).execute()
 
     if not questionnaire_insert.data:
-        raise Exception("Failed to create quesytionnaire")
+        raise Exception("Failed to create questionnaire")
 
     questionnaire_id = questionnaire_insert.data[0]["id"]
 
@@ -75,16 +76,6 @@ def submit_questionnaire():
         if not question_insert.data:
             raise Execption("Failed to insert question.")
 
-        question_id = question_insert.data[0]["id"]
-
-        for option_index, option in enumerate(LIKERT_OPTIONS):
-            client.table("answer_options").insert({
-                "question_id": question_id,
-                "option_text": option_text,
-                "position": option_index
-            }).execute
-
-    return questionnaire_id
 
 if __name__ == "__main__":
 

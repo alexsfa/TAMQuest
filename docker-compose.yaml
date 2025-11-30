@@ -10,12 +10,6 @@ services:
       - "443:443"
     depends_on:
       - app
-      - auth
-      - rest
-      - storage
-      - realtime
-    networks:
-      - supabase-net
 
   app:
     build: 
@@ -30,30 +24,6 @@ services:
     volumes:
       - ./app:/app
       - ./app/.streamlit/config.toml:/home/streamlit-user/.streamlit/config.toml
-    networks:
-      - supabase-net
-
-  auth:
-    build:
-      context: .
-      dockerfile: dockerfiles/Dockerfile.auth
-    ports:
-      - "8081:8081"
-    environment:
-      GOTRUE_SITE_URL: https://tamquest.click # the URL that is used when Gotrue generates links for authentication flows
-      API_EXTERNAL_URL: https://tamquest.click/auth/v1 # the URL that client apps use to call GoTrue
-      GOTRUE_JWT_SECRET: ${GOTRUE_JWT_SECRET} # secret that is used to sign JWT authentication tokens
-      GOTRUE_DB_DRIVER: postgres # the database type
-      GOTRUE_DB_DATABASE_URL: ${GOTRUE_AUTH_SCHEMA_URL} # connection string for postgres db
-      GOTRUE_DISABLE_SIGNUP: "false" # enables/disables user registration
-      GOTRUE_MAILER_AUTOCONFIRM: "true" # enables/disables email confirmation links
-      GOTRUE_LOG_LEVEL: "debug" # level of log verbosity
-    depends_on:
-      - db
-      - app
-    restart: always
-    networks:
-      - supabase-net
 
   certbot:
     image: certbot/dns-route53:latest
@@ -75,121 +45,6 @@ services:
           echo 'Reload nginx service, if certificate gets renewal'
           sleep 12h & wait $!;
         done
-      
-  db:
-    image: postgres:15
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    ports:
-      - "5432:5432"
-    volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - supabase-net
-  
-  
-  # supabase_cli is a utility container used to run SupabaseCLI commands inside the Docker env.
-  supabase_cli:
-    build:
-      context: .
-      dockerfile: ./dockerfiles/Dockerfile.cli
-    volumes: 
-      - /var/run/docker.sock:/var/run/docker.sock # enables the direct communication with the Docker daemon
-    environment:
-      DATABASE_URL: ${DATABASE_URL}
-      GOTRUE_URL: http://auth:8081
-      SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
-      GOTRUE_JWT_SECRET: ${GOTRUE_JWT_SECRET}
-      APP_ADMIN_EMAIL: ${APP_ADMIN_EMAIL}
-      APP_ADMIN_PASSWORD: ${APP_ADMIN_PASSWORD}
-    depends_on:
-      - db
-      - auth
-    networks:
-      - supabase-net
-      
-  # rest service runs PostgREST, a web server that turns PostgreSQL db into a RESTful API.
-  rest:
-    build:
-      context: .
-      dockerfile: ./dockerfiles/Dockerfile.rest
-    ports:
-      - "3001:3001"
-    environment:
-      SUPABASE_URL: ${SUPABASE_URL:-https://tamquest.click}
-      SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
-      ANON_KEY: ${ANON_KEY}
-      PGRST_JWT_SECRET: ${GOTRUE_JWT_SECRET}
-      DATABASE_URL: ${DATABASE_URL}
-      DB_USER: postgres
-      DB_PASSWORD: ${POSTGRES_PASSWORD}
-      DB_NAME: tamquest_db
-      DB_HOST: db
-      DB_PORT: 5432
-    depends_on:
-      - db
-      - supabase_cli
-    networks:
-      - supabase-net
-
-  # Realtime service works as a Websocket server that listens to changes in the Postgres db.
-  # It is essential for updating the client's UI in real time.
-  realtime:
-    build:
-      context: .
-      dockerfile: ./dockerfiles/Dockerfile.realtime
-    ports:
-      - "4000:4000"
-    environment:
-      APP_NAME: realtime
-      CLUSTER_STRATEGY: ""
-      RLIMIT_NOFILE: 1048576
-      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
-      DATABASE_URL: ${DATABASE_URL}
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_NAME: tamquest_db
-      DB_USER: postgres
-      DB_PASSWORD: ${POSTGRES_PASSWORD}
-      JWT_SECRET: ${GOTRUE_JWT_SECRET}
-      DB_MIGRATIONS_TABLE: realtime_schema_migrations
-    depends_on:
-      - db
-      - supabase_cli
-    networks:
-      - supabase-net
-
-  storage:
-    build:
-      context: .
-      dockerfile: dockerfiles/Dockerfile.storage
-    ports:
-      - "5000:5000"
-    environment:
-      ANON_KEY: ${ANON_KEY} # ANON_KEY authenticates requests as an anonymous user with limited permissions defined by your RLS
-      SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY} # Key which gives permissions to admin priviliges
-      POSTGREST_URL: http://rest:3000
-      PGRST_JWT_SECRET: ${GOTRUE_JWT_SECRET}
-      DATABASE_URL: ${DATABASE_URL}
-      GOTRUE_URL: http://auth:8081
-      FILE_STORAGE_BACKEND_PATH: /storage_data
-    depends_on:
-      - auth
-    networks:
-      - supabase-net
-    volumes:
-    - ./storage-folder:/storage_data
-
-networks:
-  supabase-net:
-    driver: bridge
 
 volumes:
   ssl_certificate: 
