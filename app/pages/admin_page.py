@@ -22,6 +22,8 @@ additional_question_configs = [
     ("Trust questions", "Trust"),
 ]
 
+LIKERT_SCALE = ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"]
+
 radio_options = ["Yes", "No"]
 
 def preview_questionnaire():
@@ -73,8 +75,12 @@ def submit_questionnaire():
                 "position": position
             }).execute()
 
+            question_id = question_insert.data[0]["id"]
+
         if not question_insert.data:
             raise Execption("Failed to insert question.")
+
+    st.success("Your questionnaire has been submitted!")
 
 
 if __name__ == "__main__":

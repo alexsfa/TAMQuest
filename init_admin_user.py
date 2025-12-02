@@ -20,10 +20,8 @@ admin = supabase.auth.admin
 def ensure_admin_exists(admin):
 
     response = admin.list_users()
-    for u in response:
-        print(u)
 
-    admin_exists = any(u.get("email") == ADMIN_EMAIL for u in response if isinstance(u, dict))
+    admin_exists = any(getattr(user, "email", None) == ADMIN_EMAIL for user in response)
 
     if admin_exists:
         print(f"Admin user '{ADMIN_EMAIL}' already exists.")

@@ -14,7 +14,7 @@ services:
   app:
     build: 
       context: .
-      dockerfile: ./dockerfiles/Dockerfile.app
+      dockerfile: ./Dockerfile.app
     environment:
       SUPABASE_URL: ${SUPABASE_URL:-https://tamquest.click}
       SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}

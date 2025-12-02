@@ -2,7 +2,6 @@ import subprocess
 import time
 from watchdog.observers.polling import PollingObserver as Observer
 from watchdog.events import FileSystemEventHandler
-from scripts.init_admin_user import ensure_admin_exists
 import os
 import signal
 
