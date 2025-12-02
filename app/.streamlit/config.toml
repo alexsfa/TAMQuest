@@ -5,9 +5,10 @@ gatherUsageStats = false
 [theme]
 base="dark"                # or "dark"
 primaryColor="#ffffffff"      # button & accent color
-backgroundColor="#208de7ff"   # page background
-secondaryBackgroundColor="#7aa8d3ff"
-textColor="#000000ff"
+backgroundColor="#9cc4e5ff"   # page background
+secondaryBackgroundColor="#b0d3f5ff"
+textColor="#00325aff"
+borderColor = "#025da7ff"
 font="sans serif" 
 
 [client]

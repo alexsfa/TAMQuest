@@ -1,4 +1,5 @@
 import streamlit as st
+from pprint import pprint, pformat
 from scripts.generate_questionnaires import generate_tam_questions, generate_additional_tam_questions,ESSENTIAL_TAM_QUESTIONS, ADDITIONAL_TAM_QUESTIONS
 from scripts import supabase_client 
 from scripts.menu import menu
@@ -26,17 +27,40 @@ LIKERT_SCALE = ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly a
 
 radio_options = ["Yes", "No"]
 
+def init_questionnaire_ui_state():
+    if "create_questionnaire" not in st.session_state:
+        st.session_state.create_questionnaire = False
+
+    if "add_questions" not in st.session_state:
+        st.session_state.add_questions = False
+
+    if "show_preview" not in st.session_state:
+        st.session_state.show_preview = False
+
+def restart_questionnaire_ui_state():
+    if st.session_state.create_questionnaire:
+        st.session_state.create_questionnaire = False
+
+    if st.session_state.add_questions:
+        st.session_state.add_questions = False
+
+    if st.session_state.show_preview:
+        st.session_state.show_preview = False
+
 def preview_questionnaire():
     if st.session_state.get("app_name").strip() == "":
         st.warning("Please enter an app name.")
         return
 
-    if not st.session_state.get("q_details").strip() == "":
-        st.write( f"Details: { st.session_state.q_details }")
+    questions = generate_tam_questions(ESSENTIAL_TAM_QUESTIONS, st.session_state.app_name)
 
-    st.write(generate_tam_questions(ESSENTIAL_TAM_QUESTIONS, st.session_state.app_name))
-    if st.session_state["add_questions"]:
-        st.write(generate_additional_tam_questions(ADDITIONAL_TAM_QUESTIONS, st.session_state.app_name))
+    if "add_questions" in st.session_state and st.session_state["add_questions"]:
+        questions.update(generate_additional_tam_questions(ADDITIONAL_TAM_QUESTIONS, st.session_state.app_name))
+
+    for category, questions in questions.items():
+        st.markdown(f"### **{category}**" + "\n".join(f"\n{i+1} - {q}" for i, q in enumerate(questions)))
+
+    
 
 def submit_questionnaire():
 
@@ -78,9 +102,18 @@ def submit_questionnaire():
             question_id = question_insert.data[0]["id"]
 
         if not question_insert.data:
-            raise Execption("Failed to insert question.")
+            raise Exception("Failed to insert question.")
 
+    st.write(st.session_state.create_questionnaire)
+    st.write(st.session_state.add_questions)
+    st.write(st.session_state.show_preview)
     st.success("Your questionnaire has been submitted!")
+    restart_questionnaire_ui_state()
+    st.write(st.session_state.create_questionnaire)
+    st.write(st.session_state.add_questions)
+    st.write(st.session_state.show_preview)
+    
+    
 
 
 if __name__ == "__main__":
@@ -88,20 +121,13 @@ if __name__ == "__main__":
     client = supabase_client.get_client()
     menu(client)
 
+    init_questionnaire_ui_state()
+
     if st.session_state.last_page != current_page:
-
-        if "create_questionnaire" in st.session_state:
-            st.session_state.create_questionnaire = False
-
-        if "add_questions" in st.session_state:
-            st.session_state.add_questions = False
-
+        restart_questionnaire_ui_state()
         st.session_state.last_page = current_page
     
     st.title("Welcome to the admin page") 
-
-    if "create_questionnaire" not in st.session_state:
-        st.session_state.create_questionnaire = False
 
     if st.button("Create new questionnaire"):
         st.session_state.create_questionnaire = not st.session_state.create_questionnaire
@@ -145,4 +171,7 @@ if __name__ == "__main__":
                 preview_questionnaire()
 
         if st.button("Submit Questionnaire"):
+            try:
                 submit_questionnaire()
+            except Exception as e:
+                st.error(f"Failed to create questionnaire: {e}")
