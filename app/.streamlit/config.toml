@@ -3,12 +3,12 @@
 gatherUsageStats = false 
 
 [theme]
-base="dark"                # or "dark"
-primaryColor="#ffffffff"      # button & accent color
+base="dark"                
+primaryColor="#E4EDA6"      # button & accent color
 backgroundColor="#9cc4e5ff"   # page background
 secondaryBackgroundColor="#b0d3f5ff"
 textColor="#00325aff"
-borderColor = "#025da7ff"
+borderColor = "#023ca7ff"
 font="sans serif" 
 
 [client]

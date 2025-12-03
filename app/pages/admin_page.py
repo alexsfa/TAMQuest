@@ -23,8 +23,6 @@ additional_question_configs = [
     ("Trust questions", "Trust"),
 ]
 
-LIKERT_SCALE = ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"]
-
 radio_options = ["Yes", "No"]
 
 def init_questionnaire_ui_state():
@@ -104,18 +102,9 @@ def submit_questionnaire():
         if not question_insert.data:
             raise Exception("Failed to insert question.")
 
-    st.write(st.session_state.create_questionnaire)
-    st.write(st.session_state.add_questions)
-    st.write(st.session_state.show_preview)
     st.success("Your questionnaire has been submitted!")
     restart_questionnaire_ui_state()
-    st.write(st.session_state.create_questionnaire)
-    st.write(st.session_state.add_questions)
-    st.write(st.session_state.show_preview)
     
-    
-
-
 if __name__ == "__main__":
 
     client = supabase_client.get_client()
