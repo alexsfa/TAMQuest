@@ -37,7 +37,8 @@ if __name__ == "__main__":
 
     st.write("## Available questionnaires")
 
-    qs = client.table("questionnaires").select("*").execute()
+    
+    qs = client.table("questionnaires").select("*").order("created_at", desc=True).execute()
 
     if len(qs.data) == 0:
         st.write("There are no questionnaires available for response")

@@ -44,6 +44,7 @@ def restart_questionnaire_ui_state():
 
     if st.session_state.show_preview:
         st.session_state.show_preview = False
+        
 
 def preview_questionnaire():
     if st.session_state.get("app_name").strip() == "":
@@ -89,15 +90,17 @@ def submit_questionnaire():
     if "add_questions" in st.session_state and st.session_state["add_questions"]:
         questions.update(generate_additional_tam_questions(ADDITIONAL_TAM_QUESTIONS, st.session_state.app_name))
 
+    position = 1
+
     for category, qs in questions.items():
-        for position, question_text in enumerate(qs):
+        for question_text in qs:
             question_insert = client.table("questions").insert({
                 "questionnaire_id": questionnaire_id,
                 "question_text": question_text,
                 "position": position
             }).execute()
 
-            question_id = question_insert.data[0]["id"]
+            position += 1
 
         if not question_insert.data:
             raise Exception("Failed to insert question.")

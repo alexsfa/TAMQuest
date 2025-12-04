@@ -9,21 +9,19 @@ def login_user(supabase_client, email: str, password: str):
     except Exception as e:
         st.error(f"Log in has failed:{e}")
 
-def signup_user(supabase_client, email:str, password: str, name:str, birthdate):
+def signup_user(supabase_client, email:str, password: str):
     try:
-        birthdate_str = birthdate.isoformat()
-        st.write(birthdate_str)
-        supabase_client.auth.sign_up({
+        
+        auth_response = supabase_client.auth.sign_up({
             "email": email,
             "password": password,
             "options": {
                 "data": { 
                     "role": "user",
-                    "name": name,
-                    "birthdate": birthdate_str,
                     }
                 }
             })
+
         st.success("Signed up successfully. Please check your email for confirmation.")
     except Exception as e:
         st.error(f"Sign up has failed: {e}")
