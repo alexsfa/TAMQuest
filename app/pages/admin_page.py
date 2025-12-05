@@ -106,7 +106,7 @@ def submit_questionnaire():
             raise Exception("Failed to insert question.")
 
     st.success("Your questionnaire has been submitted!")
-    restart_questionnaire_ui_state()
+    
     
 if __name__ == "__main__":
 
@@ -165,5 +165,6 @@ if __name__ == "__main__":
         if st.button("Submit Questionnaire"):
             try:
                 submit_questionnaire()
+                restart_questionnaire_ui_state()
             except Exception as e:
                 st.error(f"Failed to create questionnaire: {e}")

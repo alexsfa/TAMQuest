@@ -7,49 +7,112 @@ from scripts.menu import menu
 
 current_page = "profile_page"
 
+def init_profile_ui():
+    if "create_profile" not in st.session_state:
+        st.session_state.create_profile = False
+
+    if "update_profile" not in st.session_state:
+        st.session_state.update_profile = False
+
+    if "delete_profile" not in st.session_state:
+        st.session_state.delete_profile = False
+
 
 def redirect_to_view_page(questionnaire_id: str):
     st.session_state["current_response_id"] = questionnaire_id
     st.switch_page("pages/response_view_page.py")
 
+def render_profile_form(mode: str):
+    username = st.text_input("Your name", key=f"{mode}_username")
+    birthdate = st.date_input(
+        f"{mode}_birthdate", 
+        max_value=date.today(),
+        min_value=date(1900, 1, 1))
+    city = st.text_input("Your city", key=f"{mode}_user_city")
+    country = st.text_input("Your country", key=f"{mode}_user_country")
+    return [username, birthdate.isoformat(), city, country]
+
 if __name__ == "__main__":
-    st.write(st.session_state)
+   
     client = supabase_client.get_client()
     menu(client)
-    st.session_state.last_page = current_page
+
+    init_profile_ui()
+
+    if st.session_state.last_page != current_page:
+        st.session_state.create_profile = False
+        st.session_state.last_page = current_page
 
     st.title("Welcome to your profile")
 
     user_profile = client.table("profiles").select("*").eq("id", st.session_state["user_id"]).execute()
 
     if not user_profile.data:
-        if "create_profile" not in st.session_state:
-            st.session_state.create_profile = False
-
-
-
+        
         if st.button("Create your profile"):
             st.session_state.create_profile = not st.session_state.create_profile
         
-        if st.session_state.create_profile:
-            username = st.text_input("Your name", key="username")
-            birthdate = st.date_input(
-                        "Birthdate", 
-                        max_value=date.today(),
-                        min_value=date(1900, 1, 1))
-            city = st.text_input("Your city", key="user_city")
-            country = st.text_input("Your country", key="user_country")
+    else:
+        st.write(f"Full name: {user_profile.data[0]['full_name']}")
+        st.write(f"Birthdate: {user_profile.data[0]['birthdate']}")
+        st.write(f"Location: {user_profile.data[0]['country']}, {user_profile.data[0]['city']}")
 
-            if st.button("Save changes"):
-                st.write(birthdate.isoformat())
+        col1, col2 = st.columns([1,1])
+
+        with col1:
+            if st.button("Update your profile"):
+                st.session_state.update_profile = not st.session_state.update_profile
+
+        with col2:
+            if st.button("Delete your profile"):
+                st.session_state.delete_profile = not st.session_state.delete_profile
+
+    with st.container():
+
+        if st.session_state.create_profile:
+            profile_inputs = render_profile_form("insert")
+
+            if st.button("Create"):
                 profile_insert = client.table("profiles").insert({
                     "id": st.session_state["user_id"],
-                    "full_name": username,
-                    "birthdate": birthdate.isoformat(),
-                    "city": city,
-                    "country": country
+                    "full_name": profile_inputs[0],
+                    "birthdate": profile_inputs[1],
+                    "city": profile_inputs[2],
+                    "country": profile_inputs[3],
                 }).execute()
-                st.write(profile_insert)
+                st.session_state.create_profile = False
+                st.rerun()
+
+        if st.session_state.update_profile:
+            profile_inputs = render_profile_form("update")
+
+            if st.button("Update"):
+                profile_insert = client.table("profiles").update({
+                    "id": st.session_state["user_id"],
+                    "full_name": profile_inputs[0] if profile_inputs[0] else user_profile.data[0]['full_name'],
+                    "birthdate": profile_inputs[1] if profile_inputs[1] else user_profile.data[0]['birthdate'],
+                    "city": profile_inputs[2] if profile_inputs[2] else user_profile.data[0]['city'],
+                    "country": profile_inputs[3] if profile_inputs[3] else user_profile.data[0]['country'],
+                }).eq("id", st.session_state["user_id"]).execute()
+                st.session_state.update_profile = False
+                st.rerun()
+
+        if st.session_state.delete_profile:
+            st.warning("Are you sure about deleting your profile?")
+
+            col1, col2 = st.columns([1,1])
+
+            with col1:
+                if st.button("Yes", key="confirm_delete"):
+                    delete_response = client.table("profiles").delete().eq("id", st.session_state['user_id']).execute()
+                    st.session_state.delete_profile = False
+                    st.rerun()
+
+            with col2:
+                if st.button("No", key="cancel_delete"):
+                    st.session_state.delete_profile = False
+                    st.rerun()
+
 
     st.title("Your responses")
 
