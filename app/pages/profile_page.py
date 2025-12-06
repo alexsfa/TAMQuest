@@ -17,9 +17,8 @@ def init_profile_ui():
     if "delete_profile" not in st.session_state:
         st.session_state.delete_profile = False
 
-
-def redirect_to_view_page(questionnaire_id: str):
-    st.session_state["current_response_id"] = questionnaire_id
+def redirect_to_view_page(response_id: str):
+    st.session_state["current_response_id"] = response_id
     st.switch_page("pages/response_view_page.py")
 
 def render_profile_form(mode: str):
@@ -53,9 +52,13 @@ if __name__ == "__main__":
             st.session_state.create_profile = not st.session_state.create_profile
         
     else:
-        st.write(f"Full name: {user_profile.data[0]['full_name']}")
-        st.write(f"Birthdate: {user_profile.data[0]['birthdate']}")
-        st.write(f"Location: {user_profile.data[0]['country']}, {user_profile.data[0]['city']}")
+        st.write(f"##### Full name: {user_profile.data[0]['full_name']}")
+        st.write(f"##### Birthdate: {user_profile.data[0]['birthdate']}")
+        st.write(f"##### Location: {user_profile.data[0]['country']}, {user_profile.data[0]['city']}")
+        
+        # TO-DO: Add a function that standarize spacing across the whole app
+        st.markdown("<div style='margin-bottom:20px;'></div>", unsafe_allow_html=True)
+        
 
         col1, col2 = st.columns([1,1])
 
@@ -113,7 +116,7 @@ if __name__ == "__main__":
                     st.session_state.delete_profile = False
                     st.rerun()
 
-
+    st.divider()
     st.title("Your responses")
 
     responses = client.table("responses").select("questionnaires(*), id, submitted_at, is_submitted").eq("user_id", st.session_state["user_id"]).order("is_submitted", desc=True).execute()
@@ -159,6 +162,8 @@ if __name__ == "__main__":
                 respond_key = f"view_{item['id']}"
                 if st.button("View", key=respond_key):
                     redirect_to_view_page(item['id'])
+
+    st.divider()
 
     st.title("Your drafts")
 

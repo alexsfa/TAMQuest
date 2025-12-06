@@ -4,6 +4,9 @@ from scripts.generate_questionnaires import generate_tam_questions, generate_add
 from scripts import supabase_client 
 from scripts.menu import menu
 import uuid
+import html, re
+from datetime import datetime
+from app import redirect_to_respond_page
 
 current_page = "admin_page"
 
@@ -59,7 +62,21 @@ def preview_questionnaire():
     for category, questions in questions.items():
         st.markdown(f"### **{category}**" + "\n".join(f"\n{i+1} - {q}" for i, q in enumerate(questions)))
 
-    
+def delete_questionnaire(questionnaire_id: str):
+    response = client.table("questionnaires").delete().eq("id", questionnaire_id).execute()
+
+    if len(response.data) == 0:
+        return f"Error deleting questionnaire"
+    else:
+        st.rerun()
+
+def delete_profile(profile_id: str):
+    response = client.table("profiles").delete().eq("id", profile_id).execute()
+
+    if len(response.data) == 0:
+        return f"Error deleting profile"
+    else:
+        st.rerun()
 
 def submit_questionnaire():
 
@@ -168,3 +185,111 @@ if __name__ == "__main__":
                 restart_questionnaire_ui_state()
             except Exception as e:
                 st.error(f"Failed to create questionnaire: {e}")
+
+    st.divider()
+    st.write("## Available questionnaires")
+
+    qs = client.table("questionnaires").select("*").order("created_at", desc=True).execute()
+
+    if len(qs.data) == 0:
+        st.write("There are no questionnaires available for response")
+    else:
+        questionnaire_list = qs.data
+
+        for item in questionnaire_list:
+            title_safe = html.escape(item['title'])
+
+            if item['details'] is None:
+                details_safe = "No details were provided."
+            else: 
+                details_safe = html.escape(item['details'])
+
+            raw = item["created_at"]
+            raw = re.sub(
+                r"\.(\d{5})(\+|\-)",   # match .12345+00
+                lambda m: f".{m.group(1)}0{m.group(2)}", 
+                raw
+            )
+            dt = datetime.fromisoformat(raw)
+            formatted_time = dt.strftime("%Y-%m-%d %H:%M:%S %Z")
+
+            questionnaire_card = st.container()
+
+            col1, col2, col3 = st.columns([5,1,1])
+        
+            with col1:
+                st.markdown(f"""
+                    <article style='
+                        border: 4px solid #000000; 
+                        background-color: #E4EDA6;
+                        padding:8px;
+                        border-radius:8px;
+                        margin-bottom:12px;
+                        text-align: center;'>
+                        <h3>{title_safe}</h3>
+                        <p style='font-size:18px;'>{details_safe}</p>
+                        <small>Created at: {formatted_time}</small><br>
+                    </article>
+                    """, unsafe_allow_html=True)
+                
+            with col2:
+                respond_key = f"respond_{item['id']}"
+                if st.button("Respond", key=respond_key):
+                    redirect_to_respond_page(item['id'])
+
+            message_box = st.empty()
+
+            with col3:
+                delete_key = f"delete_{item['id']}"
+                if st.button("Delete", key=delete_key):
+                    msg = delete_questionnaire(item['id'])
+                    message_box.error(msg)
+        
+                st.write("\n")
+    st.divider()
+    st.write("## Profile 's list")
+
+    profiles = client.table("profiles").select("*").execute()
+
+    if len(profiles.data) == 0:
+        st.write("There are not any users yet.")
+    else:
+        for profile in profiles.data:
+            user_name = html.escape(profile["full_name"])
+            user_birthdate = html.escape(profile["birthdate"])
+            user_city = html.escape(profile["city"])
+            user_country = html.escape(profile["country"])
+
+            col1, col2 = st.columns([5,1])
+        
+            with col1:
+                st.markdown(f"""
+                    <article style='
+                        border: 4px solid #000000; 
+                        background-color: #B2FBE6;
+                        padding:8px;
+                        border-radius:8px;
+                        margin-bottom:12px;
+                        text-align: center;'>
+                        <p style='font-size:18px;'>{user_name} - {user_birthdate} - {user_country}, {user_city}</p>
+                    </article>
+                    """, unsafe_allow_html=True)
+
+            message_box = st.empty()
+
+            with col2:
+                st.markdown("""
+                    <div style="display: flex; height: 100%; align-items: center; justify-content: center;">
+                """, unsafe_allow_html=True)
+
+                delete_key = f"delete_{profile['id']}"
+                if st.button("Delete", key=delete_key):
+                    msg = delete_profile(profile['id'])
+                    message_box.error(msg)
+
+                st.markdown("</div>", unsafe_allow_html=True)
+
+
+
+
+

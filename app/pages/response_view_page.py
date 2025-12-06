@@ -3,6 +3,7 @@ import re
 from datetime import datetime
 from scripts import supabase_client 
 from scripts.menu import menu
+from app import delete_response
 
 client = supabase_client.get_client()
 
@@ -14,7 +15,7 @@ def set_response_view(answers):
         st.markdown(f"</br></br>", unsafe_allow_html=True)
 
 def retrieve_response_info(response_id: str):
-    questionnaire = client.table("responses").select("questionnaires(title, details, created_at), submitted_at").eq("id", response_id).execute()
+    questionnaire = client.table("responses").select("questionnaires(title, details, created_at), profiles(full_name), submitted_at").eq("id", response_id).execute()
     answers = client.table("answers").select("questions(question_text, position), selected_option_value").eq("response_id", response_id).order("questions(position)").execute()
 
     return [questionnaire, answers]
@@ -25,7 +26,7 @@ if __name__ == "__main__":
     response_info = retrieve_response_info(st.session_state["current_response_id"])
 
     st.title(response_info[0].data[0]['questionnaires']['title'])
-    st.write(response_info[0].data[0]['questionnaires']['details'])
+    st.write(f"Questionnaire description: {response_info[0].data[0]['questionnaires']['details']}")
 
     raw = response_info[0].data[0]['submitted_at']
     raw = re.sub(
@@ -37,6 +38,7 @@ if __name__ == "__main__":
     formatted_time = dt.strftime("%Y-%m-%d %H:%M:%S %Z")
 
     st.write(f"Submitted at {formatted_time}")
+    st.write(f"By {response_info[0].data[0]['profiles']['full_name']}")
 
     set_response_view(response_info[1])
     

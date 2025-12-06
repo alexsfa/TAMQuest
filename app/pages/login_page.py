@@ -29,8 +29,6 @@ if __name__ == "__main__":
                 st.session_state["user_id"] = logged_user.user.id
                 
                 st.switch_page("app.py")
-            else:
-                st.error("Logging in has failed.There is no such user!")
 
     
                 
