@@ -7,14 +7,20 @@ from scripts.menu import menu
 client = supabase_client.get_client()
 
 LIKERT_SCALE = [
-    "Strongly disagree", 
-    "Disagree", 
-    "Neutral", 
-    "Agree", 
-    "Strongly agree"
+    (1,"Strongly disagree"), 
+    (2,"Disagree"), 
+    (3,"Neutral"), 
+    (4,"Agree"), 
+    (5,"Strongly agree")
 ]
 
-def set_response_ui(questions):
+def set_response_ui(questions, draft_answers):
+    indexes = [
+        next((i for i, (num, text) in enumerate(LIKERT_SCALE) if text == ans), 0)
+        for ans in draft_answers
+    ]
+    st.write(indexes)
+    
     for question_index, question in enumerate(questions.data, start=1):
         question_key = f"q{question_index}_answer"
 
@@ -22,10 +28,10 @@ def set_response_ui(questions):
         st.markdown(f"<h5 style='margin-bottom:-50px'>{question_index}. {question['question_text']}</h5>", unsafe_allow_html=True)
         selected_answer = st.radio(
             label="",               
-            options=[option for option in LIKERT_SCALE],  
+            options=[option for (num, option) in LIKERT_SCALE],  
             key=question_key,
             horizontal=True,
-            index=None         
+            index=indexes[question_index - 1]  
         )
     st.markdown(f"</br></br>", unsafe_allow_html=True)
         
@@ -35,6 +41,20 @@ def retrieve_questionnaire(questionnaire_id: str):
     questionnaire_info = client.table("questionnaires").select("id, title, details, created_at").eq("id", questionnaire_id).execute()
     questions_info = client.table("questions").select("id, question_text").eq("questionnaire_id", questionnaire_id).execute()
     return [questionnaire_info, questions_info]
+
+def retrieve_draft(questionnaire_id: str):
+    response_info = client.table("responses").select("id").eq("user_id", st.session_state["user_id"]).eq("questionnaire_id", questionnaire_id).eq("is_submitted", False).execute()
+    draft_answers = []
+
+    if len(response_info.data) == 0:
+        pass
+    else:
+        answers = client.table("answers").select("*, questions(position)").eq("response_id", response_info.data[0]["id"]).order("questions(position)").execute()
+        for answer in answers.data:
+            draft_answers.append(answer["selected_option_value"])
+
+    return draft_answers
+
 
 def submit_response(user_id:str, questionnaire_id: str, get_submitted: bool, questions):
 
@@ -99,16 +119,19 @@ if __name__ == "__main__":
 
     raw = current_questionnaire[0].data[0]["created_at"]
     raw = re.sub(
-        r"\.(\d{5})(\+|\-)",   # match .12345+00
-        lambda m: f".{m.group(1)}0{m.group(2)}", 
-        raw
-    )
+            r"\.(\d+)(?=[+-])",
+            lambda m: "." + (m.group(1) + "000000")[:6],
+            raw
+        )
     dt = datetime.fromisoformat(raw)
     formatted_time = dt.strftime("%Y-%m-%d %H:%M:%S %Z")
     st.write(formatted_time)
 
     questions = current_questionnaire[1]
-    set_response_ui(questions)
+    draft_answers = retrieve_draft(current_questionnaire[0].data[0]["id"])
+    st.write(draft_answers)
+    set_response_ui(questions, draft_answers)
+    
 
     col1, col2 = st.columns([1,1])
 

@@ -30,8 +30,8 @@ if __name__ == "__main__":
 
     raw = response_info[0].data[0]['submitted_at']
     raw = re.sub(
-            r"\.(\d{5})(\+|\-)",   # match .12345+00
-            lambda m: f".{m.group(1)}0{m.group(2)}", 
+            r"\.(\d+)(?=[+-])",
+            lambda m: "." + (m.group(1) + "000000")[:6],
             raw
         )
     dt = datetime.fromisoformat(raw)

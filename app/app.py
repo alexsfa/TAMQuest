@@ -47,10 +47,10 @@ if __name__ == "__main__":
     
     if st.session_state["role"] == 'admin':
         st.write("## User's responses")
-        responses = client.table("responses").select("questionnaires(*), profiles(full_name), id, submitted_at, is_submitted").eq("is_submitted", True).order("is_submitted", desc=True).execute()
+        responses = client.table("responses").select("questionnaires(*), profiles(full_name), id, submitted_at, is_submitted").eq("is_submitted", True).order("submitted_at", desc=True).execute()
 
         if len(responses.data) == 0:
-            st.write("There are not any responses from the questionnaires")
+            st.write("There are not any responses for the questionnaires")
         else:
             response_list = responses.data
 
@@ -59,8 +59,8 @@ if __name__ == "__main__":
 
                 raw = item["submitted_at"]
                 raw = re.sub(
-                    r"\.(\d{5})(\+|\-)",   # match .12345+00
-                    lambda m: f".{m.group(1)}0{m.group(2)}", 
+                    r"\.(\d+)(?=[+-])",
+                    lambda m: "." + (m.group(1) + "000000")[:6],
                     raw
                 )
                 dt = datetime.fromisoformat(raw)
@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
                 response_card = st.container()
 
-                col1, col2, col3 = st.columns([5,1,1])
+                col1, col2, col3 = st.columns([5,0.7,1])
 
                 response_owner = html.escape(item['profiles']['full_name'])
         
@@ -102,8 +102,7 @@ if __name__ == "__main__":
                         message_box.error(msg)
 
     else:
-        qs = client.table("questionnaires").select("*").order("created_at", desc=True).execute()
-        
+        qs = client.rpc("questionnaires_without_user_response", {"uid": st.session_state["user_id"]}).execute()
 
         if len(qs.data) == 0:
             st.write("There are no questionnaires available for response")
@@ -120,8 +119,8 @@ if __name__ == "__main__":
 
                 raw = item["created_at"]
                 raw = re.sub(
-                    r"\.(\d{5})(\+|\-)",   # match .12345+00
-                    lambda m: f".{m.group(1)}0{m.group(2)}", 
+                    r"\.(\d+)(?=[+-])",
+                    lambda m: "." + (m.group(1) + "000000")[:6],
                     raw
                 )
                 dt = datetime.fromisoformat(raw)

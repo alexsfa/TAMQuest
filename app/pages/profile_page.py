@@ -4,6 +4,7 @@ import html, re
 from datetime import datetime
 from scripts import supabase_client 
 from scripts.menu import menu
+from app import redirect_to_respond_page
 
 current_page = "profile_page"
 
@@ -134,8 +135,8 @@ if __name__ == "__main__":
 
             raw = item["submitted_at"]
             raw = re.sub(
-                r"\.(\d{5})(\+|\-)",   # match .12345+00
-                lambda m: f".{m.group(1)}0{m.group(2)}", 
+                r"\.(\d+)(?=[+-])",
+                lambda m: "." + (m.group(1) + "000000")[:6],
                 raw
             )
             dt = datetime.fromisoformat(raw)
@@ -177,8 +178,8 @@ if __name__ == "__main__":
 
             raw = item["submitted_at"]
             raw = re.sub(
-                r"\.(\d{5})(\+|\-)",   # match .12345+00
-                lambda m: f".{m.group(1)}0{m.group(2)}", 
+                r"\.(\d+)(?=[+-])",
+                lambda m: "." + (m.group(1) + "000000")[:6],
                 raw
             )
             dt = datetime.fromisoformat(raw)
@@ -204,5 +205,5 @@ if __name__ == "__main__":
             with col2:
                 respond_key = f"edit_{item['questionnaires']['id']}"
                 if st.button("Edit", key=respond_key):
-                    redirect_to_view_page(item['id'])
+                    redirect_to_respond_page(item["questionnaires"]['id'])
     

@@ -189,7 +189,16 @@ if __name__ == "__main__":
     st.divider()
     st.write("## Available questionnaires")
 
-    qs = client.table("questionnaires").select("*").order("created_at", desc=True).execute()
+    qs = client.table("questionnaires").select(
+        f"""
+        *,
+        responses:responses!left(
+            id,
+            user_id,
+            questionnaire_id
+        )
+        """
+        + f"responses(user_id.eq.{st.session_state['user_id']})").order("created_at", desc=True).execute()
 
     if len(qs.data) == 0:
         st.write("There are no questionnaires available for response")
@@ -206,8 +215,8 @@ if __name__ == "__main__":
 
             raw = item["created_at"]
             raw = re.sub(
-                r"\.(\d{5})(\+|\-)",   # match .12345+00
-                lambda m: f".{m.group(1)}0{m.group(2)}", 
+                r"\.(\d+)(?=[+-])",
+                lambda m: "." + (m.group(1) + "000000")[:6],
                 raw
             )
             dt = datetime.fromisoformat(raw)
@@ -231,56 +240,63 @@ if __name__ == "__main__":
                         <small>Created at: {formatted_time}</small><br>
                     </article>
                     """, unsafe_allow_html=True)
-                
-            with col2:
-                respond_key = f"respond_{item['id']}"
-                if st.button("Respond", key=respond_key):
-                    redirect_to_respond_page(item['id'])
 
-            message_box = st.empty()
+            if len(item["responses"]) == 0:
+                with col2:
+                    respond_key = f"respond_{item['id']}"
+                    if st.button("Respond", key=respond_key):
+                        redirect_to_respond_page(item['id'])
 
-            with col3:
-                delete_key = f"delete_{item['id']}"
-                if st.button("Delete", key=delete_key):
-                    msg = delete_questionnaire(item['id'])
-                    message_box.error(msg)
+                message_box = st.empty()
+
+                with col3:
+                    delete_key = f"delete_{item['id']}"
+                    if st.button("Delete", key=delete_key):
+                        msg = delete_questionnaire(item['id'])
+                        message_box.error(msg)
+        
+                    st.write("\n")
+            else:
+                message_box = st.empty()
+
+                with col2:
+                    delete_key = f"delete_{item['id']}"
+                    if st.button("Delete", key=delete_key):
+                        msg = delete_questionnaire(item['id'])
+                        message_box.error(msg)
         
                 st.write("\n")
+
     st.divider()
-    st.write("## Profile 's list")
+    st.write("## Profiles' list")
 
     profiles = client.table("profiles").select("*").execute()
 
     if len(profiles.data) == 0:
         st.write("There are not any users yet.")
     else:
-        for profile in profiles.data:
+        cols = st.columns(3)
+        for i, profile in enumerate(profiles.data):
             user_name = html.escape(profile["full_name"])
             user_birthdate = html.escape(profile["birthdate"])
             user_city = html.escape(profile["city"])
             user_country = html.escape(profile["country"])
 
-            col1, col2 = st.columns([5,1])
-        
-            with col1:
+            col = cols[i % 3]
+            with col:
                 st.markdown(f"""
                     <article style='
                         border: 4px solid #000000; 
                         background-color: #B2FBE6;
-                        padding:8px;
                         border-radius:8px;
+                        padding-top: 12px;
                         margin-bottom:12px;
                         text-align: center;'>
-                        <p style='font-size:18px;'>{user_name} - {user_birthdate} - {user_country}, {user_city}</p>
+                        <p style='font-size:18px;'>{user_name}</p>
+                        <p style='font-size:18px;'>{user_birthdate}</p>
+                        <p style='font-size:18px;'>{user_country}, {user_city}</p>
                     </article>
                     """, unsafe_allow_html=True)
-
-            message_box = st.empty()
-
-            with col2:
-                st.markdown("""
-                    <div style="display: flex; height: 100%; align-items: center; justify-content: center;">
-                """, unsafe_allow_html=True)
 
                 delete_key = f"delete_{profile['id']}"
                 if st.button("Delete", key=delete_key):
@@ -288,6 +304,10 @@ if __name__ == "__main__":
                     message_box.error(msg)
 
                 st.markdown("</div>", unsafe_allow_html=True)
+
+            message_box = st.empty()
+
+
 
 
 
