@@ -1,6 +1,6 @@
 import streamlit as st
 import streamlit as st
-from scripts.authentication_functions import logout_user
+from utils.authentication_functions import logout_user
 
 MENU_CONFIG = {
     "user": [

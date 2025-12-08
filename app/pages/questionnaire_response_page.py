@@ -1,45 +1,88 @@
 import streamlit as st
 import re
 from datetime import datetime
-from scripts import supabase_client 
-from scripts.menu import menu
+
+from database.questionnaires import Questionnaires
+from database.questions import Questions
+
+from utils import supabase_client 
+from utils.menu import menu
+from utils.logger_config import logger
 
 client = supabase_client.get_client()
+questionnaires_repo = Questionnaires(client)
+questions_repo = Questions(client)
 
 LIKERT_SCALE = [
-    (1,"Strongly disagree"), 
-    (2,"Disagree"), 
-    (3,"Neutral"), 
-    (4,"Agree"), 
-    (5,"Strongly agree")
+    (0,"Strongly disagree"), 
+    (1,"Disagree"), 
+    (2,"Neutral"), 
+    (3,"Agree"), 
+    (4,"Strongly agree")
 ]
 
 def set_response_ui(questions, draft_answers):
-    indexes = [
-        next((i for i, (num, text) in enumerate(LIKERT_SCALE) if text == ans), 0)
-        for ans in draft_answers
-    ]
-    st.write(indexes)
-    
-    for question_index, question in enumerate(questions.data, start=1):
-        question_key = f"q{question_index}_answer"
 
+    if len(draft_answers) == 0:
+        for question_index, question in enumerate(questions.data, start=1):
+            question_key = f"q{question_index}_answer"
+
+            st.markdown(f"</br></br>", unsafe_allow_html=True)
+            st.markdown(f"<h5 style='margin-bottom:-10px'>{question_index}. {question['question_text']}</h5>", unsafe_allow_html=True)
+            selected_answer = st.radio(
+                label=question['question_text'],     
+                options=[option for (num, option) in LIKERT_SCALE],  
+                key=question_key,
+                horizontal=True,
+                index=None,
+                label_visibility="collapsed",       
+            )
         st.markdown(f"</br></br>", unsafe_allow_html=True)
-        st.markdown(f"<h5 style='margin-bottom:-50px'>{question_index}. {question['question_text']}</h5>", unsafe_allow_html=True)
-        selected_answer = st.radio(
-            label="",               
-            options=[option for (num, option) in LIKERT_SCALE],  
-            key=question_key,
-            horizontal=True,
-            index=indexes[question_index - 1]  
-        )
-    st.markdown(f"</br></br>", unsafe_allow_html=True)
+
+    else:
+        indexes = [
+            next((i for i, (num, text) in enumerate(LIKERT_SCALE) if text == ans), None)
+            for ans in draft_answers
+        ]
+    
+        for question_index, question in enumerate(questions.data, start=1):
+            question_key = f"q{question_index}_answer"
+
+            st.markdown(f"</br></br>", unsafe_allow_html=True)
+            st.markdown(f"<h5 style='margin-bottom:-10px'>{question_index}. {question['question_text']}</h5>", unsafe_allow_html=True)
+            selected_answer = st.radio(
+                label=question['question_text'],               
+                options=[option for (num, option) in LIKERT_SCALE],  
+                key=question_key,
+                horizontal=True,
+                index=indexes[question_index - 1],
+                label_visibility="collapsed"
+            )
+        st.markdown(f"</br></br>", unsafe_allow_html=True)
         
 
 
 def retrieve_questionnaire(questionnaire_id: str):
-    questionnaire_info = client.table("questionnaires").select("id, title, details, created_at").eq("id", questionnaire_id).execute()
-    questions_info = client.table("questions").select("id, question_text").eq("questionnaire_id", questionnaire_id).execute()
+    questionnaire_info = None
+    try:
+        questionnaire_info = questionnaires_repo.get_questionnaire_by_id(questionnaire_id)
+    except RuntimeError as e:
+        logger.error(f"Database error: {e}")
+
+    if questionnaire_info is None:
+        st.error("Error during questionnaire's retrieval")
+        return
+    
+    questions_info = None
+    try:
+        questions_info = questions_repo.get_questions_by_questionnaire_id(questionnaire_id)
+    except RuntimeError as e:
+        logger.error(f"Database error: {e}")
+
+    if questions_info is None:
+        st.error("Error during questions' retrieval")
+        return
+
     return [questionnaire_info, questions_info]
 
 def retrieve_draft(questionnaire_id: str):
@@ -129,7 +172,6 @@ if __name__ == "__main__":
 
     questions = current_questionnaire[1]
     draft_answers = retrieve_draft(current_questionnaire[0].data[0]["id"])
-    st.write(draft_answers)
     set_response_ui(questions, draft_answers)
     
 

@@ -24,4 +24,4 @@ ENV HOME="/home/streamlit-user"
 
 USER streamlit-user
 
-CMD ["python","./scripts/watch_script.py"]
+CMD ["python","./utils/watch_script.py"]

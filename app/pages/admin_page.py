@@ -1,16 +1,26 @@
 import streamlit as st
-from pprint import pprint, pformat
-from scripts.generate_questionnaires import generate_tam_questions, generate_additional_tam_questions,ESSENTIAL_TAM_QUESTIONS, ADDITIONAL_TAM_QUESTIONS
-from scripts import supabase_client 
-from scripts.menu import menu
 import uuid
 import html, re
+from pprint import pprint, pformat
 from datetime import datetime
+
+from database.questionnaires import Questionnaires
+from database.questions import Questions
+from database.profiles import Profiles
+
+from utils.generate_questionnaires import generate_tam_questions, generate_additional_tam_questions,ESSENTIAL_TAM_QUESTIONS, ADDITIONAL_TAM_QUESTIONS
+from utils import supabase_client 
+from utils.menu import menu
+from utils.logger_config import logger
+
 from app import redirect_to_respond_page
 
 current_page = "admin_page"
 
 client = supabase_client.get_client()
+questionnaires_repo = Questionnaires(client)
+questions_repo = Questions(client)
+profiles_repo = Profiles(client)
 
 additional_question_configs = [
     ("Technology support questions", "Technology Support"),
@@ -28,6 +38,9 @@ additional_question_configs = [
 
 radio_options = ["Yes", "No"]
 
+
+# The function init_profile_ui() initializes the fields of the session state that control the UI
+# about the creation of a questionnaire if the admin visits the profile_page for the first time.
 def init_questionnaire_ui_state():
     if "create_questionnaire" not in st.session_state:
         st.session_state.create_questionnaire = False
@@ -38,17 +51,17 @@ def init_questionnaire_ui_state():
     if "show_preview" not in st.session_state:
         st.session_state.show_preview = False
 
+    if "submit_success" not in st.session_state:
+        st.session_state.submit_success = False
+
 def restart_questionnaire_ui_state():
-    if st.session_state.create_questionnaire:
-        st.session_state.create_questionnaire = False
-
-    if st.session_state.add_questions:
-        st.session_state.add_questions = False
-
-    if st.session_state.show_preview:
-        st.session_state.show_preview = False
+    st.session_state.create_questionnaire = False
+    st.session_state.add_questions = False
+    st.session_state.show_preview = False
         
 
+# The function preview_questionnaire() renders on the page the selected by the user questions
+# that the questionnaire will include.
 def preview_questionnaire():
     if st.session_state.get("app_name").strip() == "":
         st.warning("Please enter an app name.")
@@ -62,21 +75,7 @@ def preview_questionnaire():
     for category, questions in questions.items():
         st.markdown(f"### **{category}**" + "\n".join(f"\n{i+1} - {q}" for i, q in enumerate(questions)))
 
-def delete_questionnaire(questionnaire_id: str):
-    response = client.table("questionnaires").delete().eq("id", questionnaire_id).execute()
 
-    if len(response.data) == 0:
-        return f"Error deleting questionnaire"
-    else:
-        st.rerun()
-
-def delete_profile(profile_id: str):
-    response = client.table("profiles").delete().eq("id", profile_id).execute()
-
-    if len(response.data) == 0:
-        return f"Error deleting profile"
-    else:
-        st.rerun()
 
 def submit_questionnaire():
 
@@ -91,49 +90,51 @@ def submit_questionnaire():
     else:
         questionnaire_details = None
 
-    questionnaire_insert = client.table("questionnaires").insert({
-        "title": f"TAM Questionnaire for {st.session_state.app_name}",
-        "details": questionnaire_details,
-        "created_by": st.session_state["user_id"]
-    }).execute()
+    questionnaire = None
+    try:
+        questionnaire = questionnaires_repo.create_questionnaire(st.session_state.get("app_name"), q_details, st.session_state.get("user_id"))
+    except RuntimeError as e:
+        logger.error(f"Database error: {e}")
 
-    if not questionnaire_insert.data:
-        raise Exception("Failed to create questionnaire")
-
-    questionnaire_id = questionnaire_insert.data[0]["id"]
+    if questionnaire is None:
+        st.write(questionnaire)
+        st.error("Error during the questionnaire 's creation")
+        return
 
     questions = generate_tam_questions(ESSENTIAL_TAM_QUESTIONS, st.session_state.app_name)
 
     if "add_questions" in st.session_state and st.session_state["add_questions"]:
         questions.update(generate_additional_tam_questions(ADDITIONAL_TAM_QUESTIONS, st.session_state.app_name))
 
+    questions_to_insert = []
     position = 1
 
     for category, qs in questions.items():
         for question_text in qs:
-            question_insert = client.table("questions").insert({
-                "questionnaire_id": questionnaire_id,
+            questions_to_insert.append({
+                "questionnaire_id": questionnaire.data[0]["id"],
                 "question_text": question_text,
                 "position": position
-            }).execute()
-
+            })
             position += 1
 
-        if not question_insert.data:
-            raise Exception("Failed to insert question.")
+    try:   
+        response = questions_repo.create_questions(questions_to_insert)
+        if "error" in response:
+            raise Exception(response.error['message'])
+    except Exception as e:
+        st.error(f"Error during the questions' submission: {e}")
 
-    st.success("Your questionnaire has been submitted!")
+    restart_questionnaire_ui_state()
+    st.success("Your questionnaire has been submitted")
     
     
 if __name__ == "__main__":
 
-    client = supabase_client.get_client()
     menu(client)
 
-    init_questionnaire_ui_state()
-
     if st.session_state.last_page != current_page:
-        restart_questionnaire_ui_state()
+        init_questionnaire_ui_state()
         st.session_state.last_page = current_page
     
     st.title("Welcome to the admin page") 
@@ -189,18 +190,15 @@ if __name__ == "__main__":
     st.divider()
     st.write("## Available questionnaires")
 
-    qs = client.table("questionnaires").select(
-        f"""
-        *,
-        responses:responses!left(
-            id,
-            user_id,
-            questionnaire_id
-        )
-        """
-        + f"responses(user_id.eq.{st.session_state['user_id']})").order("created_at", desc=True).execute()
+    qs = None
+    try:
+        qs = questionnaires_repo.get_all_questionnaires(st.session_state["user_id"])
+    except RuntimeError as e:
+        logger.error(f"Database error: {e}")
 
-    if len(qs.data) == 0:
+    if qs is None:
+        st.error(f"Error during the retrieval of questionnaires")
+    elif len(qs.data) == 0:
         st.write("There are no questionnaires available for response")
     else:
         questionnaire_list = qs.data
@@ -252,8 +250,15 @@ if __name__ == "__main__":
                 with col3:
                     delete_key = f"delete_{item['id']}"
                     if st.button("Delete", key=delete_key):
-                        msg = delete_questionnaire(item['id'])
-                        message_box.error(msg)
+                        response = None
+                        try:
+                            response = questionnaires_repo.delete_questionnaire_by_id(item['id'])
+                            st.rerun()
+                        except RuntimeError as e:
+                            logger.error(f"Database error: {e}")
+
+                        if response is None:
+                            st.error("Error during the delete of the questionnaire")
         
                     st.write("\n")
             else:
@@ -262,17 +267,30 @@ if __name__ == "__main__":
                 with col2:
                     delete_key = f"delete_{item['id']}"
                     if st.button("Delete", key=delete_key):
-                        msg = delete_questionnaire(item['id'])
-                        message_box.error(msg)
+                        response = None
+                        try:
+                            response = questionnaires_repo.delete_questionnaire_by_id(item['id'])
+                            st.rerun()
+                        except RuntimeError as e:
+                            logger.error(f"Database error: {e}")
+
+                        if response is None:
+                            st.error("Error during the delete of the questionnaire")
         
                 st.write("\n")
 
     st.divider()
     st.write("## Profiles' list")
 
-    profiles = client.table("profiles").select("*").execute()
-
-    if len(profiles.data) == 0:
+    profiles = None
+    try:
+        profiles = profiles_repo.get_all_profiles()
+    except RuntimeError as e:
+        logger.error(f"Database error: {e}")
+        
+    if profiles is None:
+        st.error("Error during the profiles list retrieval")
+    elif len(profiles.data) == 0:
         st.write("There are not any users yet.")
     else:
         cols = st.columns(3)
@@ -300,16 +318,15 @@ if __name__ == "__main__":
 
                 delete_key = f"delete_{profile['id']}"
                 if st.button("Delete", key=delete_key):
-                    msg = delete_profile(profile['id'])
-                    message_box.error(msg)
+                    response = None
+                    try:
+                        response = profiles_repo.delete_profile_by_id(profile['id'])
+                        st.rerun()
+                    except RuntimeError as e:
+                        logger.error(f"Database error: {e}")
 
+                    if response is None:
+                        st.error("Error during the profile's deletion")
                 st.markdown("</div>", unsafe_allow_html=True)
 
-            message_box = st.empty()
-
-
-
-
-
-
-
+        message_box = st.empty()

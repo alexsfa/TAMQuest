@@ -3,27 +3,26 @@ import re
 import html
 from datetime import datetime
 from dotenv import load_dotenv
-from scripts import supabase_client 
-from scripts.menu import menu
-from pages.profile_page import redirect_to_view_page
+
+from database.questionnaires import Questionnaires
+
+from utils import supabase_client 
+from utils.menu import menu
+from utils.redirections import redirect_to_respond_page, redirect_to_view_page
+from utils.logger_config import logger
 
 # The environment vars are getting loaded for the whole process of the app
 load_dotenv()
 
 client = supabase_client.get_client()
+questionnaires_repo = Questionnaires(client)
 
 current_page = "main_page"
 
 # -----------------------------------------
 # Below starts the UI of the app
 # -----------------------------------------
-def delete_questionnaire(questionnaire_id: str):
-    questionnaire = client.table("questionnaires").delete().eq("id", questionnaire_id).execute()
 
-    if len(questionnaire.data) == 0:
-        return f"Error deleting questionnaire"
-    else:
-        st.rerun()
 
 def delete_response(response_id: str):
     response = client.table("responses").delete().eq("id", response_id).execute()
@@ -33,12 +32,7 @@ def delete_response(response_id: str):
     else:
         st.rerun()
 
-def redirect_to_respond_page(questionnaire_id: str):
-    st.session_state["current_response_id"] = questionnaire_id
-    st.switch_page("pages/questionnaire_response_page.py")
-
 if __name__ == "__main__":
-    client = supabase_client.get_client()
     menu(client)
     st.session_state.last_page = current_page
 
@@ -102,9 +96,16 @@ if __name__ == "__main__":
                         message_box.error(msg)
 
     else:
-        qs = client.rpc("questionnaires_without_user_response", {"uid": st.session_state["user_id"]}).execute()
-
-        if len(qs.data) == 0:
+        
+        qs = None
+        try:
+            qs = questionnaires_repo.questionnaires_without_user_response(st.session_state["user_id"])
+        except RuntimeError as e:
+            logger.error(f"Database error: {e}")
+        
+        if qs is None:
+            st.error(f"Error during the questionnaires retrieval: {e}")
+        elif len(qs.data) == 0:
             st.write("There are no questionnaires available for response")
         else:
             questionnaire_list = qs.data

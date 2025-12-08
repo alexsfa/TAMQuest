@@ -2,12 +2,22 @@ import streamlit as st
 from datetime import date
 import html, re
 from datetime import datetime
-from scripts import supabase_client 
-from scripts.menu import menu
-from app import redirect_to_respond_page
+
+from database.profiles import Profiles
+
+from utils import supabase_client 
+from utils.menu import menu
+from utils.redirections import redirect_to_respond_page, redirect_to_view_page
+from utils.logger_config import logger
 
 current_page = "profile_page"
 
+client = supabase_client.get_client()
+profiles_repo = Profiles(client)
+
+
+# The function init_profile_ui() initializes the fields of the session state 
+# that control the profile UI if the user visits the profile_page for the first time.
 def init_profile_ui():
     if "create_profile" not in st.session_state:
         st.session_state.create_profile = False
@@ -18,10 +28,9 @@ def init_profile_ui():
     if "delete_profile" not in st.session_state:
         st.session_state.delete_profile = False
 
-def redirect_to_view_page(response_id: str):
-    st.session_state["current_response_id"] = response_id
-    st.switch_page("pages/response_view_page.py")
 
+# The function render_profile_form renders the form with the profile fields
+# so the user can create his own profile or update it.
 def render_profile_form(mode: str):
     username = st.text_input("Your name", key=f"{mode}_username")
     birthdate = st.date_input(
@@ -33,7 +42,7 @@ def render_profile_form(mode: str):
     return [username, birthdate.isoformat(), city, country]
 
 if __name__ == "__main__":
-   
+
     client = supabase_client.get_client()
     menu(client)
 
@@ -45,13 +54,17 @@ if __name__ == "__main__":
 
     st.title("Welcome to your profile")
 
-    user_profile = client.table("profiles").select("*").eq("id", st.session_state["user_id"]).execute()
+    user_profile = None
+    try:
+        user_profile = profiles_repo.get_profile_by_id(st.session_state["user_id"])
+    except RuntimeError as e:
+        logger.error(f"Database error: {e}")
 
-    if not user_profile.data:
-        
+    if user_profile is None:
+        st.error("Error during profile's retrieval")
+    elif len(user_profile.data) == 0:
         if st.button("Create your profile"):
             st.session_state.create_profile = not st.session_state.create_profile
-        
     else:
         st.write(f"##### Full name: {user_profile.data[0]['full_name']}")
         st.write(f"##### Birthdate: {user_profile.data[0]['birthdate']}")
@@ -76,31 +89,40 @@ if __name__ == "__main__":
         if st.session_state.create_profile:
             profile_inputs = render_profile_form("insert")
 
+            profile_insert = None
             if st.button("Create"):
-                profile_insert = client.table("profiles").insert({
-                    "id": st.session_state["user_id"],
-                    "full_name": profile_inputs[0],
-                    "birthdate": profile_inputs[1],
-                    "city": profile_inputs[2],
-                    "country": profile_inputs[3],
-                }).execute()
-                st.session_state.create_profile = False
-                st.rerun()
+                try:
+                    profile_insert = profiles_repo.create_profile(st.session_state["user_id"], profile_inputs[0], profile_inputs[1], profile_inputs[2], profile_inputs[3])
+                    st.write(profile_insert)
+                except RuntimeError as e:
+                    logger.error(f"Database error: {e}")
+
+                if profile_insert is None:
+                    raise Exception("Failed to create profile.")
+                else:
+                    st.session_state.create_profile = False
+                    st.rerun()
 
         if st.session_state.update_profile:
             profile_inputs = render_profile_form("update")
 
             if st.button("Update"):
-                profile_insert = client.table("profiles").update({
-                    "id": st.session_state["user_id"],
-                    "full_name": profile_inputs[0] if profile_inputs[0] else user_profile.data[0]['full_name'],
-                    "birthdate": profile_inputs[1] if profile_inputs[1] else user_profile.data[0]['birthdate'],
-                    "city": profile_inputs[2] if profile_inputs[2] else user_profile.data[0]['city'],
-                    "country": profile_inputs[3] if profile_inputs[3] else user_profile.data[0]['country'],
-                }).eq("id", st.session_state["user_id"]).execute()
-                st.session_state.update_profile = False
-                st.rerun()
+                profile_update = None
+                try:
+                    profile_update = profiles_repo.update_profile_by_id(
+                        st.session_state["user_id"], profile_inputs[0], profile_inputs[1],
+                        profile_inputs[2], profile_inputs[3],user_profile.data[0]['full_name'],
+                        user_profile.data[0]['birthdate'],user_profile.data[0]['city'],user_profile.data[0]['country']
+                    )
+                except RuntimeError as e:
+                    logger.error(f"Database error: {e}")
 
+                if profile_update is None:
+                    st.error("Error during profile update attempt.")
+                else:
+                    st.session_state.update_profile = False
+                    st.rerun()
+    
         if st.session_state.delete_profile:
             st.warning("Are you sure about deleting your profile?")
 
@@ -108,9 +130,17 @@ if __name__ == "__main__":
 
             with col1:
                 if st.button("Yes", key="confirm_delete"):
-                    delete_response = client.table("profiles").delete().eq("id", st.session_state['user_id']).execute()
-                    st.session_state.delete_profile = False
-                    st.rerun()
+                    profile_delete = None
+                    try:
+                        profile_delete = profiles_repo.delete_profile_by_id(st.session_state["user_id"])
+                    except RuntimeError as e:
+                        logger.error(f"Database error: {e}")
+
+                    if profile_delete is None:
+                        st.error("Error during the profile's deletion.")
+                    else:
+                        st.session_state.delete_profile = False
+                        st.rerun()
 
             with col2:
                 if st.button("No", key="cancel_delete"):

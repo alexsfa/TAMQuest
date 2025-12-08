@@ -1,8 +1,8 @@
 import streamlit as st
 import re
 from datetime import datetime
-from scripts import supabase_client 
-from scripts.menu import menu
+from utils import supabase_client 
+from utils.menu import menu
 from app import delete_response
 
 client = supabase_client.get_client()
