@@ -9,7 +9,10 @@ class Questions:
     """
     def get_questions_by_questionnaire_id(self, questionnaire_id: str):
         try:
-            self.supabase_client.table("questions").select("id, question_text").eq("questionnaire_id", questionnaire_id).execute()
+            return(
+                self.supabase_client.table("questions").select("id, question_text")
+                .eq("questionnaire_id", questionnaire_id).execute()
+            )
         except Exception as e:
             raise RuntimeError(f"Failed to retrieve questions: {e}")
 

@@ -130,7 +130,7 @@ def submit_questionnaire():
     
     
 if __name__ == "__main__":
-
+    st.write(st.session_state)
     menu(client)
 
     if st.session_state.last_page != current_page:

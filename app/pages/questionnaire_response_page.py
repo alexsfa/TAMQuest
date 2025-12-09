@@ -4,6 +4,8 @@ from datetime import datetime
 
 from database.questionnaires import Questionnaires
 from database.questions import Questions
+from database.responses import Responses
+from database.answers import Answers
 
 from utils import supabase_client 
 from utils.menu import menu
@@ -12,6 +14,8 @@ from utils.logger_config import logger
 client = supabase_client.get_client()
 questionnaires_repo = Questionnaires(client)
 questions_repo = Questions(client)
+responses_repo = Responses(client)
+answers_repo = Answers(client)
 
 LIKERT_SCALE = [
     (0,"Strongly disagree"), 
@@ -21,9 +25,9 @@ LIKERT_SCALE = [
     (4,"Strongly agree")
 ]
 
-def set_response_ui(questions, draft_answers):
+def set_response_ui(questions, draft_answers: list | None = None):
 
-    if len(draft_answers) == 0:
+    if draft_answers is None:
         for question_index, question in enumerate(questions.data, start=1):
             question_key = f"q{question_index}_answer"
 
@@ -40,11 +44,11 @@ def set_response_ui(questions, draft_answers):
         st.markdown(f"</br></br>", unsafe_allow_html=True)
 
     else:
+        # check which selected_option_value field of draft_answers matches a scale of LIKERT SCALE list
         indexes = [
-            next((i for i, (num, text) in enumerate(LIKERT_SCALE) if text == ans), None)
-            for ans in draft_answers
+            next((i for i, (num, text) in enumerate(LIKERT_SCALE) if text == ans["selected_option_value"]), None)
+            for ans in draft_answers.data
         ]
-    
         for question_index, question in enumerate(questions.data, start=1):
             question_key = f"q{question_index}_answer"
 
@@ -86,71 +90,108 @@ def retrieve_questionnaire(questionnaire_id: str):
     return [questionnaire_info, questions_info]
 
 def retrieve_draft(questionnaire_id: str):
-    response_info = client.table("responses").select("id").eq("user_id", st.session_state["user_id"]).eq("questionnaire_id", questionnaire_id).eq("is_submitted", False).execute()
-    draft_answers = []
 
-    if len(response_info.data) == 0:
-        pass
-    else:
-        answers = client.table("answers").select("*, questions(position)").eq("response_id", response_info.data[0]["id"]).order("questions(position)").execute()
-        for answer in answers.data:
-            draft_answers.append(answer["selected_option_value"])
+    response_info = None
+    try:
+        response_info = responses_repo.get_responses_by_questionnaire_id(st.session_state["user_id"], questionnaire_id, False)
+    except RuntimeError as e:
+        logger.error(f"Database error: {e}")
 
-    return draft_answers
+    return response_info
+        
 
+def submit_response(user_id: str,questionnaire_id: str, get_submitted: bool, questions):
 
-def submit_response(user_id:str, questionnaire_id: str, get_submitted: bool, questions):
-
+    # checking if all the questions have been answered
     all_answered = all(
         st.session_state.get(f"q{i}_answer") is not None
         for i in range(1, len(questions.data) + 1)
     )
 
+    # continue for submission only if all questions have been answered
     if get_submitted and not all_answered:
         st.error("Please answer all of the questions before submitting")
         return None
 
-    response_info = client.table("responses").select("id").eq("user_id", user_id).eq("questionnaire_id", questionnaire_id).eq("is_submitted", False).execute()
+    response_info = None
+    try:
 
-    if len(response_info.data) == 0:
-        response_insert = client.table("responses").insert({
-            "user_id": user_id,
-            "questionnaire_id": questionnaire_id,
-            "is_submitted": get_submitted
-        }).execute()
+        response_info = responses_repo.get_responses_by_questionnaire_id(st.session_state["user_id"], questionnaire_id, False)
 
-        for index,question in enumerate(questions.data):
-            key = f"q{index+1}_answer"
-            answer_insert = client.table("answers").insert({
-                "response_id": response_insert.data[0]["id"],
-                "question_id": question["id"],
-                "selected_option_value": st.session_state[key]
-            }).execute()
+    except RuntimeError as e:
+        logger.error(f"Database error: {e}")
 
+    if response_info is None:
+        st.error("There was a database error! Try again later!")
     else:
-    
+        if len(response_info.data) == 0:
 
-        for index,question in enumerate(questions.data):
-            key = f"q{index+1}_answer"
+            # If there is not any draft response for the questionnaire by the user, insert a new response row
+            response_insert = None
+            try:
+                response_insert = responses_repo.create_response(st.session_state["user_id"], questionnaire_id, get_submitted)
 
-            answer_insert = (
-                client.table("answers")
-                .update({"selected_option_value": st.session_state[key]})
-                .eq("response_id", response_info.data[0]["id"])
-                .eq("question_id", question["id"])
-                .execute()
-            )
+            except RuntimeError as e:
+                logger.error(f"Database error: {e}")
 
-        if get_submitted == True:
-            response = client.table("responses").update({"is_submitted": get_submitted}).eq("id", response_info.data[0]["id"]).execute()
+            if response_insert is None:
+                st.error("Error during the response submission")
+                return
 
-            if not response:
-                st.error(f"Submit failed! Try later!")
+            # create the list with the answer table inserts with response_id the new response insert
+            answer_list = []
+            for index,question in enumerate(questions.data):
+                key = f"q{index+1}_answer"
+                answer_list.append({ 
+                    "response_id": response_insert.data[0]["id"], 
+                    "question_id": question["id"], 
+                    "selected_option_value": st.session_state[key]
+                })
+
+            # insert the answer list items in the answer's table
+            answer_insert = None
+            try:
+                answer_insert = answers_repo.create_answers(answer_list)
+            except RuntimeError as e:
+                logger.error(f"Database error: {e}")
+
+            if answer_insert is None:
+                st.error("There was a database error! Try again later!")
+        else:
+            # if
+            answers_list = []
+            
+            for index,question in enumerate(questions.data):
+                key = f"q{index+1}_answer"
+                answers_list.append({ 
+                    "response_id": response_info.data[0]["id"], 
+                    "question_id": question["id"], 
+                    "selected_option_value": st.session_state[key]
+                })
+
+            answers_update = None
+            try:
+                answers_update = answers_repo.update_answers(answers_list)
+            except RuntimeError as e:
+                logger.error(f"Database error: {e}")
+
+            if answers_update is None:
+                st.error("There was a database error! Try again later!")
+
+            if get_submitted == True:
+                update_response = None
+                try:
+                    update_response = responses_repo.update_response_on_submitted(st.session_state["user_id"], get_submitted)
+                except RuntimeError as e:
+                    logger.error(f"Database error: {e}")
+
+                if update_response is None:
+                    st.error("There was a databases error! Try again later!")
 
 
 if __name__ == "__main__":
     menu(client)
-
+    st.write(st.session_state)
     current_questionnaire = retrieve_questionnaire(st.session_state["current_response_id"])
     st.title(current_questionnaire[0].data[0]["title"])
 
@@ -171,8 +212,22 @@ if __name__ == "__main__":
     st.write(formatted_time)
 
     questions = current_questionnaire[1]
-    draft_answers = retrieve_draft(current_questionnaire[0].data[0]["id"])
-    set_response_ui(questions, draft_answers)
+    response_draft_info = retrieve_draft(current_questionnaire[0].data[0]["id"])
+    if response_draft_info is None:
+        st.error("Error during draft search. Try again later!")
+    elif len(response_draft_info.data) == 0:
+        set_response_ui(questions)
+    else:
+        draft_answers = None
+        try:
+            draft_answers = answers_repo.get_answers_by_response_id(response_draft_info.data[0]["id"])
+        except RuntimeError as e:
+            logger.error(f"Database errore: {e}")
+
+        if draft_answers is None:
+            st.error("Error during draft answers retrieval!")
+
+        set_response_ui(questions, draft_answers)
     
 
     col1, col2 = st.columns([1,1])

@@ -42,6 +42,7 @@ def render_profile_form(mode: str):
     return [username, birthdate.isoformat(), city, country]
 
 if __name__ == "__main__":
+    st.write(st.session_state)
 
     client = supabase_client.get_client()
     menu(client)

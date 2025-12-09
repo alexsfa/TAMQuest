@@ -5,6 +5,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 from database.questionnaires import Questionnaires
+from database.responses import Responses
 
 from utils import supabase_client 
 from utils.menu import menu
@@ -16,6 +17,7 @@ load_dotenv()
 
 client = supabase_client.get_client()
 questionnaires_repo = Questionnaires(client)
+responses_repo = Responses(client)
 
 current_page = "main_page"
 
@@ -23,16 +25,8 @@ current_page = "main_page"
 # Below starts the UI of the app
 # -----------------------------------------
 
-
-def delete_response(response_id: str):
-    response = client.table("responses").delete().eq("id", response_id).execute()
-
-    if len(response.data) == 0:
-        return f"Error deleting response"
-    else:
-        st.rerun()
-
 if __name__ == "__main__":
+    st.write(st.session_state)
     menu(client)
     st.session_state.last_page = current_page
 
@@ -41,9 +35,16 @@ if __name__ == "__main__":
     
     if st.session_state["role"] == 'admin':
         st.write("## User's responses")
-        responses = client.table("responses").select("questionnaires(*), profiles(full_name), id, submitted_at, is_submitted").eq("is_submitted", True).order("submitted_at", desc=True).execute()
 
-        if len(responses.data) == 0:
+        responses = None
+        try:
+            responses = responses_repo.get_all_responses()
+        except RuntimeError as e:
+            logger.error(f"Database error: {e}")
+
+        if responses is None:
+            st.error("Error during the responses retrieval")
+        elif len(responses.data) == 0:
             st.write("There are not any responses for the questionnaires")
         else:
             response_list = responses.data
@@ -92,8 +93,14 @@ if __name__ == "__main__":
                 with col3:
                     delete_key = f"delete_{item['id']}"
                     if st.button("Delete", key=delete_key):
-                        msg = delete_response(item['id'])
-                        message_box.error(msg)
+                        delete_response = None
+                        try:
+                            delete_response = responses_repo.delete_response_by_id(item['id'])
+                        except RuntimeError as e:
+                            logger.error(f"Database error: {e}")
+
+                        if delete_response is None:
+                            st.error(f"Error during the response's deletion")
 
     else:
         
@@ -104,7 +111,7 @@ if __name__ == "__main__":
             logger.error(f"Database error: {e}")
         
         if qs is None:
-            st.error(f"Error during the questionnaires retrieval: {e}")
+            st.error(f"Error during the questionnaires retrieval")
         elif len(qs.data) == 0:
             st.write("There are no questionnaires available for response")
         else:
@@ -129,7 +136,7 @@ if __name__ == "__main__":
 
                 questionnaire_card = st.container()
 
-                col1, col2, col3 = st.columns([5,1,1])
+                col1, col2 = st.columns([4,1])
         
                 with col1:
                     st.markdown(f"""
@@ -152,12 +159,3 @@ if __name__ == "__main__":
                         redirect_to_respond_page(item['id'])
 
                 message_box = st.empty()
-
-                if st.session_state.role == 'admin':
-                    with col3:
-                        delete_key = f"delete_{item['id']}"
-                        if st.button("Delete", key=delete_key):
-                            msg = delete_questionnaire(item['id'])
-                            message_box.error(msg)
-        
-                    st.write("\n")
