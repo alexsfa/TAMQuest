@@ -7,7 +7,7 @@ from database.questions import Questions
 from database.responses import Responses
 from database.answers import Answers
 
-from services.database_service import retrieve_questionnaire, submit_response
+from services.database_service import retrieve_questionnaire_by_response, retrieve_questionnaire, submit_response
 
 from utils import supabase_client 
 from utils.menu import menu
@@ -21,28 +21,45 @@ responses_repo = Responses(client)
 answers_repo = Answers(client)
 
 if __name__ == "__main__":
+    
     menu(client)
 
-    current_questionnaire = retrieve_questionnaire(st.session_state["current_response_id"])
-    if current_questionnaire is None:
+    current_questionnaire = None
+    if st.session_state.edit_response_mode == True:
+        current_questionnaire = retrieve_questionnaire_by_response(st.session_state["current_response_id"])
+        questionnaire_id = current_questionnaire[0].data[0]["questionnaires"]["id"]
+        questionnaire_title = current_questionnaire[0].data[0]["questionnaires"]["title"]
+        questionnaire_details = current_questionnaire[0].data[0]["questionnaires"]["details"]
+        questionnaire_timestamp = current_questionnaire[0].data[0]["questionnaires"]["created_at"]
+    else:
+        st.write(st.session_state["current_questionnaire_id"])
+        current_questionnaire = retrieve_questionnaire(st.session_state["current_questionnaire_id"])
+        
+        questionnaire_id = current_questionnaire[0].data[0]["id"]
+        questionnaire_title = current_questionnaire[0].data[0]["title"]
+        questionnaire_details = current_questionnaire[0].data[0]["details"]
+        questionnaire_timestamp = current_questionnaire[0].data[0]["created_at"]
+
+    if current_questionnaire[0] is None:
         st.error("Error during the questionnaire's retrieval")
+        st.write(st.session_state)
         st.stop()
 
-    st.title(current_questionnaire[0].data[0]["title"])
+    st.title(questionnaire_title)
 
-    if current_questionnaire[0].data[0]["details"] == "": 
+    if questionnaire_details == "": 
         st.write("No further details were provided")
     else: 
-        st.write(current_questionnaire[0].data[0]["details"])
+        st.write(questionnaire_details)
 
-    formatted_time = format_time(current_questionnaire[0].data[0]["created_at"])
+    formatted_time = format_time(questionnaire_timestamp)
     st.write(formatted_time)
 
     questions = current_questionnaire[1]
     
     response_draft_info = None
     try:
-        response_draft_info = responses_repo.get_responses_by_questionnaire_id(st.session_state["user_id"], current_questionnaire[0].data[0]["id"], False)
+        response_draft_info = responses_repo.get_responses_by_questionnaire_id(st.session_state["user_id"], questionnaire_id, False)
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
 
@@ -71,7 +88,7 @@ if __name__ == "__main__":
 
     with col1:
         if st.button("Submit"):
-            submission_state = submit_response(st.session_state["user_id"], current_questionnaire[0].data[0]["id"], True, questions)
+            submission_state = submit_response(st.session_state["user_id"], questionnaire_id, True, questions)
             if submission_state is None:
                 message_box.error("Error during your response's submission")
             else:
@@ -79,10 +96,13 @@ if __name__ == "__main__":
 
     with col2:
         if st.button("Save Draft"):
-            submission_state = submit_response(st.session_state["user_id"], current_questionnaire[0].data[0]["id"], False, questions)
+            submission_state = submit_response(st.session_state["user_id"], questionnaire_id, False, questions)
             if submission_state is None:
                 message_box.error("Error during your draft's submission")
             else:
                 message_box.success("Your draft has been submitted")
+
+    
+
 
 

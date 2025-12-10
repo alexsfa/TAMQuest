@@ -8,6 +8,7 @@ from services import authentication_functions as auth
 from utils import supabase_client 
 
 if __name__ == "__main__":
+    
     client = supabase_client.get_client()
 
     st.header("This app is private.")
@@ -31,6 +32,8 @@ if __name__ == "__main__":
                 st.session_state["user_id"] = logged_user.user.id
                 
                 st.switch_page("app.py")
+
+
 
     
                 

@@ -30,8 +30,24 @@ def retrieve_questionnaire(questionnaire_id: str):
         logger.error(f"Database error: {e}")
 
     return [questionnaire_info, questions_info]
+
+def retrieve_questionnaire_by_response(response_id: str):
+    st.write(response_id)
+    questionnaire_info = None
+    try:
+        response_info = responses_repo.get_response_by_id(response_id)
+    except RuntimeError as e:
+        logger.error(f"Database error: {e}")
+    st.write(response_info)
+    questions_info = None
+    try:
+        questions_info = questions_repo.get_questions_by_questionnaire_id(response_info.data[0]["questionnaires"]["id"])
+    except RuntimeError as e:
+        logger.error(f"Database error: {e}")
+
+    return [response_info, questions_info]
         
-def submit_questionnaire( app_name: str, q_details: str):
+def submit_questionnaire( app_name: str, q_details: str, user_id: str):
 
     if app_name.strip() == "":
         st.warning("Please enter an app name.")
@@ -46,7 +62,7 @@ def submit_questionnaire( app_name: str, q_details: str):
 
     questionnaire = None
     try:
-        questionnaire = questionnaires_repo.create_questionnaire(st.session_state.get("app_name"), q_details, st.session_state.get("user_id"))
+        questionnaire = questionnaires_repo.create_questionnaire(st.session_state.get("app_name"), q_details, user_id)
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
 
@@ -78,9 +94,9 @@ def submit_questionnaire( app_name: str, q_details: str):
 
 def retrieve_response_info(response_id: str):
     
-    questionnaire = None
+    response = None
     try:
-        questionnaire = responses_repo.get_response_by_id(response_id)
+        response = responses_repo.get_response_by_id(response_id)
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
 
@@ -94,7 +110,7 @@ def retrieve_response_info(response_id: str):
         st.error("Error during answers' retrieval")
         return
 
-    return [questionnaire, answers]
+    return [response, answers]
 
 def submit_response(user_id: str,questionnaire_id: str, get_submitted: bool, questions):
 
@@ -111,7 +127,7 @@ def submit_response(user_id: str,questionnaire_id: str, get_submitted: bool, que
 
     response_info = None
     try:
-        response_info = responses_repo.get_responses_by_questionnaire_id(st.session_state["user_id"], questionnaire_id, False)
+        response_info = responses_repo.get_responses_by_questionnaire_id(user_id, questionnaire_id, False)
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
 
@@ -152,8 +168,9 @@ def submit_response(user_id: str,questionnaire_id: str, get_submitted: bool, que
         if answer_insert is None:
             st.error("Error during answers' submission. Please, try again later.")
             return
+    
+        return[response_insert, answer_insert]
 
-            return[response_insert, answer_insert]
     else:
 
         answers_list = []

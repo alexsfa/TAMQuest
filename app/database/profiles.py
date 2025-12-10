@@ -47,7 +47,7 @@ class Profiles:
                             "full_name": new_full_name if new_full_name else old_full_name,
                             "birthdate": new_birth_date if new_birth_date else old_birth_date,
                             "city": new_city if new_city else old_city,
-                            "country": new_country if old_country else old_country,
+                            "country": new_country if new_country else old_country,
             }).eq("id", user_id).execute()
         except Exception as e:
             raise RuntimeError(f"Failed to update profile: {e}")

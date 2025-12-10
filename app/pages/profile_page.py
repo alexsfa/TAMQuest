@@ -9,7 +9,7 @@ from utils import supabase_client
 from utils.menu import menu
 from utils.logger_config import logger
 from utils.components import create_response_card, create_profile_form, create_responses_management_ui
-from utils.redirections import redirect_to_respond_page, redirect_to_view_page
+from utils.redirections import redirect_to_respond_page, redirect_to_view_page, redirect_to_edit_page
 
 client = supabase_client.get_client()
 profiles_repo = Profiles(client)
@@ -18,11 +18,12 @@ responses_repo = Responses(client)
 current_page = "profile_page"
 
 def restart_profile_ui_state():
-    st.session_state["create_profile"]= False
-    st.session_state["update_profile"]= False
-    st.session_state["delete_profile"]= False
+    st.session_state["create_profile"] = False
+    st.session_state["update_profile"] = False
+    st.session_state["delete_profile"] = False
 
 if __name__ == "__main__":
+    
     menu(client)
     if st.session_state.last_page != current_page:
         restart_profile_ui_state()
@@ -145,8 +146,8 @@ if __name__ == "__main__":
     elif len(submitted) == 0:
         st.write("There are no responses")
     else:
-        for item in submitted:
-            create_responses_management_ui(item, "View", redirect_to_view_page, user_profile.data[0]['full_name'])
+        for response in submitted:
+            create_responses_management_ui(response, response["id"], "View",  redirect_to_view_page, user_profile.data[0]['full_name'])
 
     st.divider()
 
@@ -158,6 +159,7 @@ if __name__ == "__main__":
         st.write("There are no drafts")
     else:
 
-        for item in drafts:
-            create_responses_management_ui(item, "Edit", redirect_to_respond_page, user_profile.data[0]['full_name'])
+        for draft in drafts:
+            create_responses_management_ui(draft, draft["id"], "Edit",  redirect_to_edit_page, user_profile.data[0]['full_name'])
+
     

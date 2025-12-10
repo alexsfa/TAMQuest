@@ -33,7 +33,7 @@ def create_questionnaire_card(questionnaire: dict):
     
     title_safe = html.escape(questionnaire['title'])
 
-    if questionnaire["details"] is "":
+    if questionnaire["details"] == "":
         details_safe = "No details were provided."
     else: 
         details_safe = html.escape(questionnaire['details'])
@@ -172,21 +172,29 @@ def create_profile_form(mode: str):
     country = st.text_input("Your country", key=f"{mode}_user_country")
     return [username, birthdate.isoformat(), city, country]
 
-def create_responses_management_ui(response: dict, redirection_button: str, callback, response_profile_name: str | None = None):
+def create_responses_management_ui(response: dict, search_id: str, redirection_button: str, callback, response_profile_name: str | None = None):
     col1, col2, col3 = st.columns([3,0.4,0.5])
         
     with col1:
         create_response_card(response, response_profile_name)
                 
     with col2:
-        respond_key = f"{redirection_button}_{response['questionnaires']['id']}"
+        respond_key = f"{redirection_button}_{response['id']}"
         if st.button(redirection_button, key=respond_key):
-            callback(response["questionnaires"]['id'])
+            callback(search_id)
 
     with col3:
         delete_key = f"delete_{response['id']}"
         if st.button("Delete", key=delete_key):
-            response_delete_state = responses_repo.delete_response_by_id(response['id'])
-            st.write(response_delete_state)
+            delete_response = None
+            try:
+                delete_response = responses_repo.delete_response_by_id(response['id'])
+            except RuntimeError as e:
+                logger.error(f"Database error: {e}")
+
+            if delete_response is None:
+                st.error(f"Error during the response's deletion")
+            else:
+                st.rerun()
 
 

@@ -9,7 +9,7 @@ from database.responses import Responses
 from database.profiles import Profiles
 
 from utils import supabase_client 
-from utils.components import create_questionnaire_card, create_response_card
+from utils.components import create_questionnaire_card, create_response_card, create_responses_management_ui
 from utils.menu import menu
 from utils.redirections import redirect_to_respond_page, redirect_to_view_page
 from utils.logger_config import logger
@@ -32,6 +32,8 @@ def init_ui_state():
         "create_profile": False,
         "update_profile": False,
         "delete_profile": False,
+        "current_questionnaire_id": None,
+        "current_response_id": None,
     }
 
     for key, value in state_values.items():
@@ -83,33 +85,8 @@ if __name__ == "__main__":
         else:
             response_list = responses.data
 
-            for item in response_list: 
-
-                col1, col2, col3 = st.columns([5, 0.7, 1])
-        
-                with col1:
-                    create_response_card(item)
-                
-                with col2:
-                    respond_key = f"view_{item['id']}"
-                    if st.button("View", key=respond_key):
-                        redirect_to_view_page(item['id'])
-
-                message_box = st.empty()
-
-                with col3:
-                    delete_key = f"delete_{item['id']}"
-                    if st.button("Delete", key=delete_key):
-                        delete_response = None
-                        try:
-                            delete_response = responses_repo.delete_response_by_id(item['id'])
-                        except RuntimeError as e:
-                            logger.error(f"Database error: {e}")
-
-                        if delete_response is None:
-                            st.error(f"Error during the response's deletion")
-                        else:
-                            st.rerun()
+            for response in response_list:
+                create_responses_management_ui(response, response["id"], "View",  redirect_to_view_page)
 
     else:
         
@@ -139,8 +116,17 @@ if __name__ == "__main__":
                     respond_key = f"respond_{item['id']}"
                     if st.button("Respond", key=respond_key):
                         if st.session_state["profile_id"] is None:
-                            message_box.error("You have to create a profile before submitting a questionnaire")
+                            message_box.error("You have to create a profile before submitting a response")
                         else:
                             redirect_to_respond_page(item['id'])
+
+    
+    st.write(st.session_state)
+
+                
+
+
+        
+
 
                 

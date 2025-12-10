@@ -47,6 +47,7 @@ def restart_questionnaire_ui_state():
     st.session_state.show_preview = False
     
 if __name__ == "__main__":
+    st.write(st.session_state)
     menu(client)
     if st.session_state.last_page != current_page:
         restart_questionnaire_ui_state()
@@ -100,7 +101,7 @@ if __name__ == "__main__":
 
             if st.button("Submit Questionnaire"):
                 submit_result = []
-                submit_result = submit_questionnaire(st.session_state["app_name"], st.session_state["q_details"])
+                submit_result = submit_questionnaire(st.session_state["app_name"], st.session_state["q_details"], st.session_state["user_id"])
                 if submit_result is None:
                     st.error("Error during questionnaire submission! Try again later!")
                 else:
@@ -204,3 +205,5 @@ if __name__ == "__main__":
                 st.markdown("</div>", unsafe_allow_html=True)
 
         message_box = st.empty()
+
+    st.write(st.session_state)

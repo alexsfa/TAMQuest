@@ -17,7 +17,17 @@ MENU_CONFIG = {
 def sign_out(supabase_client):
     logout_user(supabase_client)
 
-    for key in ["user_id", "role", "supabase"]:
+    delete_state = [
+        "user_id",
+        "role",
+        "supabase",
+        "profile_id",
+        "last_page",
+        "current_response_id"
+        "current_questionnaire_id"
+    ]
+
+    for key in delete_state:
         if key in st.session_state:
             del st.session_state[key]
 

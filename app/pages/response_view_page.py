@@ -17,6 +17,7 @@ answers_repo = Answers(client)
 responses_repo = Responses(client)
         
 if __name__ == "__main__":
+    
     menu(client)
 
     response_info = retrieve_response_info(st.session_state["current_response_id"])
@@ -24,7 +25,8 @@ if __name__ == "__main__":
     if response_info[0] is None:
         st.error("Error during the questionnaire info retrieval! Try again later")
     else:
-        st.title(response_info[0].data[0]['questionnaires']['title'])
+        st.write(response_info[0])
+        st.title(response_info[0].data[0]["questionnaires"]['title'])
         st.write(f"Questionnaire description: {response_info[0].data[0]['questionnaires']['details']}")
 
         formatted_time = format_time(response_info[0].data[0]['submitted_at'])
@@ -34,4 +36,5 @@ if __name__ == "__main__":
         
         for answer in response_info[1].data:
             set_answer_layout(answer)
+
     

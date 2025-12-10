@@ -22,7 +22,7 @@ class Responses:
         try:
             return (
                 self.supabase_client.table("responses")
-                .select("questionnaires(title, details, created_at), profiles(full_name), submitted_at")
+                .select("questionnaires(id, title, details, created_at), profiles(full_name), submitted_at")
                 .eq("id", response_id).execute()
             )
         except Exception as e:
