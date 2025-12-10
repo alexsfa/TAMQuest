@@ -6,8 +6,10 @@ from dotenv import load_dotenv
 
 from database.questionnaires import Questionnaires
 from database.responses import Responses
+from database.profiles import Profiles
 
 from utils import supabase_client 
+from utils.components import create_questionnaire_card, create_response_card
 from utils.menu import menu
 from utils.redirections import redirect_to_respond_page, redirect_to_view_page
 from utils.logger_config import logger
@@ -15,20 +17,52 @@ from utils.logger_config import logger
 # The environment vars are getting loaded for the whole process of the app
 load_dotenv()
 
+current_page = "main_page"
+
 client = supabase_client.get_client()
 questionnaires_repo = Questionnaires(client)
 responses_repo = Responses(client)
+profiles_repo = Profiles(client)
 
-current_page = "main_page"
+def init_ui_state():
+    state_values = {
+        "create_questionnaire": False,
+        "add_questions": False,
+        "show_preview": False,
+        "create_profile": False,
+        "update_profile": False,
+        "delete_profile": False,
+    }
+
+    for key, value in state_values.items():
+        st.session_state[key] = value
 
 # -----------------------------------------
 # Below starts the UI of the app
 # -----------------------------------------
 
 if __name__ == "__main__":
-    st.write(st.session_state)
+    
+    if "last_page" not in st.session_state:
+        init_ui_state()
+        st.session_state.last_page = current_page
+
     menu(client)
     st.session_state.last_page = current_page
+
+    user_profile = None
+    try:
+        user_profile = profiles_repo.get_profile_by_id(st.session_state["user_id"])
+    except RuntimeError as e:
+        logger.error(f"Database error: {e}")
+
+    if user_profile is None:
+        st.error("Error during your profile retrieval")
+        st.stop
+    elif len(user_profile.data) == 0:
+        st.session_state["profile_id"] = None
+    else:
+        st.session_state["profile_id"] = user_profile.data[0]["id"]
 
     st.title("Welcome to TAMQuest")
 
@@ -49,39 +83,12 @@ if __name__ == "__main__":
         else:
             response_list = responses.data
 
-            for item in response_list:
-                title_safe = html.escape(item['questionnaires']['title'])
+            for item in response_list: 
 
-                raw = item["submitted_at"]
-                raw = re.sub(
-                    r"\.(\d+)(?=[+-])",
-                    lambda m: "." + (m.group(1) + "000000")[:6],
-                    raw
-                )
-                dt = datetime.fromisoformat(raw)
-                formatted_time = dt.strftime("%Y-%m-%d %H:%M:%S %Z")
-
-                response_card = st.container()
-
-                col1, col2, col3 = st.columns([5,0.7,1])
-
-                response_owner = html.escape(item['profiles']['full_name'])
+                col1, col2, col3 = st.columns([5, 0.7, 1])
         
                 with col1:
-                    st.markdown(f"""
-                        <article style='
-                            border: 4px solid #000000; 
-                            background-color: #E4EDA6;
-                            padding:8px;
-                            border-radius:8px;
-                            margin-bottom:12px;
-                            text-align: center;'>
-                            <p style='font-size:18px; margin-top:4px; margin-bottom:0px;'>Response for</p>
-                            <h3 style=' margin-bottom:0px;'>{title_safe}</h3>
-                            <small>Submitted at: {formatted_time}</small><br>
-                            <small>By: {response_owner}</small><br>
-                        </article>
-                        """, unsafe_allow_html=True)
+                    create_response_card(item)
                 
                 with col2:
                     respond_key = f"view_{item['id']}"
@@ -101,6 +108,8 @@ if __name__ == "__main__":
 
                         if delete_response is None:
                             st.error(f"Error during the response's deletion")
+                        else:
+                            st.rerun()
 
     else:
         
@@ -118,44 +127,20 @@ if __name__ == "__main__":
             questionnaire_list = qs.data
 
             for item in questionnaire_list:
-                title_safe = html.escape(item['title'])
-
-                if item['details'] is None:
-                    details_safe = "No details were provided."
-                else: 
-                    details_safe = html.escape(item['details'])
-
-                raw = item["created_at"]
-                raw = re.sub(
-                    r"\.(\d+)(?=[+-])",
-                    lambda m: "." + (m.group(1) + "000000")[:6],
-                    raw
-                )
-                dt = datetime.fromisoformat(raw)
-                formatted_time = dt.strftime("%Y-%m-%d %H:%M:%S %Z")
-
-                questionnaire_card = st.container()
+                
+                message_box = st.empty()
 
                 col1, col2 = st.columns([4,1])
         
                 with col1:
-                    st.markdown(f"""
-                        <article style='
-                            border: 4px solid #000000; 
-                            background-color: #E4EDA6;
-                            padding:8px;
-                            border-radius:8px;
-                            margin-bottom:12px;
-                            text-align: center;'>
-                            <h3>{title_safe}</h3>
-                            <p style='font-size:18px;'>{details_safe}</p>
-                            <small>Created at: {formatted_time}</small><br>
-                        </article>
-                        """, unsafe_allow_html=True)
+                    create_questionnaire_card(item)
                 
                 with col2:
                     respond_key = f"respond_{item['id']}"
                     if st.button("Respond", key=respond_key):
-                        redirect_to_respond_page(item['id'])
+                        if st.session_state["profile_id"] is None:
+                            message_box.error("You have to create a profile before submitting a questionnaire")
+                        else:
+                            redirect_to_respond_page(item['id'])
 
-                message_box = st.empty()
+                

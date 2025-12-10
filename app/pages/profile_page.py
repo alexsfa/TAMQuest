@@ -1,56 +1,31 @@
 import streamlit as st
 from datetime import date
 import html, re
-from datetime import datetime
 
 from database.profiles import Profiles
+from database.responses import Responses
 
 from utils import supabase_client 
 from utils.menu import menu
-from utils.redirections import redirect_to_respond_page, redirect_to_view_page
 from utils.logger_config import logger
-
-current_page = "profile_page"
+from utils.components import create_response_card, create_profile_form, create_responses_management_ui
+from utils.redirections import redirect_to_respond_page, redirect_to_view_page
 
 client = supabase_client.get_client()
 profiles_repo = Profiles(client)
+responses_repo = Responses(client)
 
+current_page = "profile_page"
 
-# The function init_profile_ui() initializes the fields of the session state 
-# that control the profile UI if the user visits the profile_page for the first time.
-def init_profile_ui():
-    if "create_profile" not in st.session_state:
-        st.session_state.create_profile = False
-
-    if "update_profile" not in st.session_state:
-        st.session_state.update_profile = False
-
-    if "delete_profile" not in st.session_state:
-        st.session_state.delete_profile = False
-
-
-# The function render_profile_form renders the form with the profile fields
-# so the user can create his own profile or update it.
-def render_profile_form(mode: str):
-    username = st.text_input("Your name", key=f"{mode}_username")
-    birthdate = st.date_input(
-        f"{mode}_birthdate", 
-        max_value=date.today(),
-        min_value=date(1900, 1, 1))
-    city = st.text_input("Your city", key=f"{mode}_user_city")
-    country = st.text_input("Your country", key=f"{mode}_user_country")
-    return [username, birthdate.isoformat(), city, country]
+def restart_profile_ui_state():
+    st.session_state["create_profile"]= False
+    st.session_state["update_profile"]= False
+    st.session_state["delete_profile"]= False
 
 if __name__ == "__main__":
-    st.write(st.session_state)
-
-    client = supabase_client.get_client()
     menu(client)
-
-    init_profile_ui()
-
     if st.session_state.last_page != current_page:
-        st.session_state.create_profile = False
+        restart_profile_ui_state()
         st.session_state.last_page = current_page
 
     st.title("Welcome to your profile")
@@ -71,7 +46,6 @@ if __name__ == "__main__":
         st.write(f"##### Birthdate: {user_profile.data[0]['birthdate']}")
         st.write(f"##### Location: {user_profile.data[0]['country']}, {user_profile.data[0]['city']}")
         
-        # TO-DO: Add a function that standarize spacing across the whole app
         st.markdown("<div style='margin-bottom:20px;'></div>", unsafe_allow_html=True)
         
 
@@ -88,24 +62,24 @@ if __name__ == "__main__":
     with st.container():
 
         if st.session_state.create_profile:
-            profile_inputs = render_profile_form("insert")
+            profile_inputs = create_profile_form("insert")
 
-            profile_insert = None
             if st.button("Create"):
+                profile_insert = None
                 try:
                     profile_insert = profiles_repo.create_profile(st.session_state["user_id"], profile_inputs[0], profile_inputs[1], profile_inputs[2], profile_inputs[3])
-                    st.write(profile_insert)
                 except RuntimeError as e:
                     logger.error(f"Database error: {e}")
 
                 if profile_insert is None:
                     raise Exception("Failed to create profile.")
                 else:
+                    st.session_state["profile_id"] = profile_insert.data[0]["id"]
                     st.session_state.create_profile = False
                     st.rerun()
 
         if st.session_state.update_profile:
-            profile_inputs = render_profile_form("update")
+            profile_inputs = create_profile_form("update")
 
             if st.button("Update"):
                 profile_update = None
@@ -140,6 +114,7 @@ if __name__ == "__main__":
                     if profile_delete is None:
                         st.error("Error during the profile's deletion.")
                     else:
+                        st.session_state["profile_id"] = None
                         st.session_state.delete_profile = False
                         st.rerun()
 
@@ -150,91 +125,39 @@ if __name__ == "__main__":
 
     st.divider()
     st.title("Your responses")
+    
+    responses = None
+    try:
+        responses = responses_repo.get_response_by_user_id(st.session_state["user_id"])
+    except RuntimeError as e:
+        logger.error(f"Database error: {e}")
 
-    responses = client.table("responses").select("questionnaires(*), id, submitted_at, is_submitted").eq("user_id", st.session_state["user_id"]).order("is_submitted", desc=True).execute()
+    drafts, submitted = None, None
+    if responses is None:
+        drafts = None
+        submitted = None
+    else:
+        drafts = [r for r in responses.data if not r["is_submitted"]]
+        submitted = [r for r in responses.data if r["is_submitted"]]
 
-    drafts = [r for r in responses.data if not r["is_submitted"]]
-    submitted = [r for r in responses.data if r["is_submitted"]]
-
-    if len(submitted) == 0:
+    if submitted is None:
+        st.error("There was a problem with the database. Please, try again later.")
+    elif len(submitted) == 0:
         st.write("There are no responses")
     else:
-
         for item in submitted:
-
-            title_safe = html.escape(item['questionnaires']['title'])
-
-            raw = item["submitted_at"]
-            raw = re.sub(
-                r"\.(\d+)(?=[+-])",
-                lambda m: "." + (m.group(1) + "000000")[:6],
-                raw
-            )
-            dt = datetime.fromisoformat(raw)
-            formatted_time = dt.strftime("%Y-%m-%d %H:%M:%S %Z")
-
-            col1, col2 = st.columns([3,1])
-        
-            with col1:
-                st.markdown(f"""
-                    <article style='
-                        border: 4px solid #000000; 
-                        background-color: #E4EDA6;
-                        padding:8px;
-                        border-radius:8px;
-                        margin-bottom:12px;
-                        text-align: center;'>
-                        <small>Response for:</small><br>
-                        <h3>{title_safe}</h3>
-                        <small>Submitted at: {formatted_time}</small><br>
-                    </article>
-                    """, unsafe_allow_html=True)
-                
-            with col2:
-                respond_key = f"view_{item['id']}"
-                if st.button("View", key=respond_key):
-                    redirect_to_view_page(item['id'])
+            create_responses_management_ui(item, "View", redirect_to_view_page, user_profile.data[0]['full_name'])
 
     st.divider()
 
     st.title("Your drafts")
 
-    if len(drafts) == 0:
+    if drafts is None:
+        st.error("There was a problem with the database. Please, try again later.")
+    elif len(drafts) == 0:
         st.write("There are no drafts")
     else:
 
         for item in drafts:
-
-            title_safe = html.escape(item['questionnaires']['title'])
-
-            raw = item["submitted_at"]
-            raw = re.sub(
-                r"\.(\d+)(?=[+-])",
-                lambda m: "." + (m.group(1) + "000000")[:6],
-                raw
-            )
-            dt = datetime.fromisoformat(raw)
-            formatted_time = dt.strftime("%Y-%m-%d %H:%M:%S %Z")
-
-            col1, col2 = st.columns([3,1])
-        
-            with col1:
-                st.markdown(f"""
-                    <article style='
-                        border: 4px solid #000000; 
-                        background-color: #E4EDA6;
-                        padding:8px;
-                        border-radius:8px;
-                        margin-bottom:12px;
-                        text-align: center;'>
-                        <small>Response draft for:</small><br>
-                        <h3>{title_safe}</h3>
-                        <small>Saved at: {formatted_time}</small><br>
-                    </article>
-                    """, unsafe_allow_html=True)
-                
-            with col2:
-                respond_key = f"edit_{item['questionnaires']['id']}"
-                if st.button("Edit", key=respond_key):
-                    redirect_to_respond_page(item["questionnaires"]['id'])
+            create_responses_management_ui(item, "Edit", redirect_to_respond_page, user_profile.data[0]['full_name'])
     

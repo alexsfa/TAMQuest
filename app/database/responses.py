@@ -16,18 +16,30 @@ class Responses:
             raise RuntimeError(f"Failed to retrieve responses: {e}")
 
     """
-    The get_user_responses_by_id function gets all the responses that their user_id 
+    The get_response_by_id function gets the response that matches with the response_id parameter (for users)
+    """
+    def get_response_by_id(self, response_id: str):
+        try:
+            return (
+                self.supabase_client.table("responses")
+                .select("questionnaires(title, details, created_at), profiles(full_name), submitted_at")
+                .eq("id", response_id).execute()
+            )
+        except Exception as e:
+            raise RuntimeError(f"Failed to retrieve response: {e}")
+
+    """
+    The get_response_by_user_id function gets all the responses that their user_id 
     matches the parameter user_id (for users)
     """
-    def get_user_responses_by_id(self, user_id: str):
+    def get_response_by_user_id(self, user_id: str):
         try:
             return (
                 self.supabase_client.table("responses").select("questionnaires(*), id, submitted_at, is_submitted")
                 .eq("user_id", user_id).order("is_submitted", desc=True).execute()
             )
         except Exception as e:
-            raise RuntimeError(f"Failed to retrieve responses: {e}")
-
+            raise RuntimeError(f"Failed to retrieve response: {e}")
 
     """
     The get_draft_by_questionnaire_id function gets the user's response by its questionnaire_id.

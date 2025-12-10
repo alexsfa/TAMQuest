@@ -1,9 +1,11 @@
 import os
 import streamlit as st
-from dotenv import load_dotenv
-from utils import authentication_functions as auth
-from utils import supabase_client 
 from supabase import create_client, Client
+from dotenv import load_dotenv
+
+from services import authentication_functions as auth
+
+from utils import supabase_client 
 
 if __name__ == "__main__":
     client = supabase_client.get_client()

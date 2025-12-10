@@ -3,11 +3,12 @@ class Profiles:
         self.supabase_client = client
 
     """
-    The get_all_profiles function returns all the profiles from database's profiles table (for admins)
+    The get_all_profiles function returns all the profiles from database's profiles table 
+    except the one that belongs to the user that calls it(for admins)
     """
-    def get_all_profiles(self):
+    def get_all_profiles(self, user_id: str):
         try:
-            return self.supabase_client.table("profiles").select("*").execute()
+            return self.supabase_client.table("profiles").select("*").neq("id", user_id).execute()
         except Exception as e:
             raise RuntimeError(f"Failed to retrieve profiles: {e}")
 
