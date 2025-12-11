@@ -147,7 +147,7 @@ if __name__ == "__main__":
         st.write("There are no responses")
     else:
         for response in submitted:
-            create_responses_management_ui(response, response["id"], "View",  redirect_to_view_page, user_profile.data[0]['full_name'])
+            create_responses_management_ui(response, "View",  redirect_to_view_page, user_profile.data[0]['full_name'])
 
     st.divider()
 
@@ -160,6 +160,6 @@ if __name__ == "__main__":
     else:
 
         for draft in drafts:
-            create_responses_management_ui(draft, draft["id"], "Edit",  redirect_to_edit_page, user_profile.data[0]['full_name'])
+            create_responses_management_ui(draft,  "Edit",  redirect_to_edit_page, user_profile.data[0]['full_name'])
 
     

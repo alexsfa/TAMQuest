@@ -92,6 +92,10 @@ def submit_questionnaire( app_name: str, q_details: str, user_id: str):
 
         return [questionnaire, questions_insert]
 
+
+'''
+The retrieve_response_info function retrieves a response by id and its corresponding answers
+'''
 def retrieve_response_info(response_id: str):
     
     response = None
@@ -106,11 +110,8 @@ def retrieve_response_info(response_id: str):
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
 
-    if answers is None:
-        st.error("Error during answers' retrieval")
-        return
-
     return [response, answers]
+
 
 def submit_response(user_id: str,questionnaire_id: str, get_submitted: bool, questions):
 

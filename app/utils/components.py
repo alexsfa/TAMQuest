@@ -159,8 +159,10 @@ def preview_questionnaire(app_name: str):
     for category, questions in questions.items():
         st.markdown(f"### **{category}**" + "\n".join(f"\n{i+1} - {q}" for i, q in enumerate(questions)))
 
-# The function render_profile_form renders the form with the profile fields
-# so the user can create his own profile or update it.
+'''
+The function render_profile_form renders the form with the profile fields
+so the user can create his own profile or update it.
+'''
 def create_profile_form(mode: str):
     username = st.text_input("Your name", key=f"{mode}_username")
     birthdate = st.date_input(
@@ -172,7 +174,11 @@ def create_profile_form(mode: str):
     country = st.text_input("Your country", key=f"{mode}_user_country")
     return [username, birthdate.isoformat(), city, country]
 
-def create_responses_management_ui(response: dict, search_id: str, redirection_button: str, callback, response_profile_name: str | None = None):
+'''
+The create_responses_management_ui function render the response card 
+and the interaction keys for the response argument.
+'''
+def create_responses_management_ui(response: dict, redirection_button: str, callback, response_profile_name: str | None = None):
     col1, col2, col3 = st.columns([3,0.4,0.5])
         
     with col1:
@@ -181,7 +187,7 @@ def create_responses_management_ui(response: dict, search_id: str, redirection_b
     with col2:
         respond_key = f"{redirection_button}_{response['id']}"
         if st.button(redirection_button, key=respond_key):
-            callback(search_id)
+            callback(response["id"])
 
     with col3:
         delete_key = f"delete_{response['id']}"

@@ -32,6 +32,7 @@ def init_ui_state():
         "create_profile": False,
         "update_profile": False,
         "delete_profile": False,
+        "edit_response_mode": False,
         "current_questionnaire_id": None,
         "current_response_id": None,
     }
@@ -45,13 +46,16 @@ def init_ui_state():
 
 if __name__ == "__main__":
     
+    # if the user visits for the first time, we initialize the ui state.
     if "last_page" not in st.session_state:
         init_ui_state()
         st.session_state.last_page = current_page
 
+    # renders the menu for authenticated users or redirects to login page for unauthenticated
     menu(client)
     st.session_state.last_page = current_page
 
+    # checks if the user has already created a profile
     user_profile = None
     try:
         user_profile = profiles_repo.get_profile_by_id(st.session_state["user_id"])
@@ -60,7 +64,7 @@ if __name__ == "__main__":
 
     if user_profile is None:
         st.error("Error during your profile retrieval")
-        st.stop
+        st.stop()
     elif len(user_profile.data) == 0:
         st.session_state["profile_id"] = None
     else:
@@ -68,7 +72,7 @@ if __name__ == "__main__":
 
     st.title("Welcome to TAMQuest")
 
-    
+    # Admin's main page shows all the responses that have been submitted    
     if st.session_state["role"] == 'admin':
         st.write("## User's responses")
 
@@ -86,7 +90,7 @@ if __name__ == "__main__":
             response_list = responses.data
 
             for response in response_list:
-                create_responses_management_ui(response, response["id"], "View",  redirect_to_view_page)
+                create_responses_management_ui(response, "View",  redirect_to_view_page)
 
     else:
         
@@ -120,8 +124,6 @@ if __name__ == "__main__":
                         else:
                             redirect_to_respond_page(item['id'])
 
-    
-    st.write(st.session_state)
 
                 
 

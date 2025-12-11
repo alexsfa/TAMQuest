@@ -23,7 +23,7 @@ answers_repo = Answers(client)
 if __name__ == "__main__":
     
     menu(client)
-
+    
     current_questionnaire = None
     if st.session_state.edit_response_mode == True:
         current_questionnaire = retrieve_questionnaire_by_response(st.session_state["current_response_id"])
@@ -32,9 +32,7 @@ if __name__ == "__main__":
         questionnaire_details = current_questionnaire[0].data[0]["questionnaires"]["details"]
         questionnaire_timestamp = current_questionnaire[0].data[0]["questionnaires"]["created_at"]
     else:
-        st.write(st.session_state["current_questionnaire_id"])
         current_questionnaire = retrieve_questionnaire(st.session_state["current_questionnaire_id"])
-        
         questionnaire_id = current_questionnaire[0].data[0]["id"]
         questionnaire_title = current_questionnaire[0].data[0]["title"]
         questionnaire_details = current_questionnaire[0].data[0]["details"]
@@ -42,7 +40,6 @@ if __name__ == "__main__":
 
     if current_questionnaire[0] is None:
         st.error("Error during the questionnaire's retrieval")
-        st.write(st.session_state)
         st.stop()
 
     st.title(questionnaire_title)
@@ -101,6 +98,7 @@ if __name__ == "__main__":
                 message_box.error("Error during your draft's submission")
             else:
                 message_box.success("Your draft has been submitted")
+    
 
     
 

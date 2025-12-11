@@ -26,10 +26,4 @@ def signup_user(supabase_client, email:str, password: str):
     except Exception as e:
         st.error(f"Sign up has failed: {e}")
 
-def logout_user(supabase_client):
-    try:
-        supabase_client.auth.sign_out()
-    except Exception as e:
-        st.error(f"Logout failed: {e}")
-
     
