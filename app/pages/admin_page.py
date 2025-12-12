@@ -47,7 +47,7 @@ def restart_questionnaire_ui_state():
     st.session_state.show_preview = False
     
 if __name__ == "__main__":
-    st.write(st.session_state)
+
     menu(client)
     if st.session_state.last_page != current_page:
         restart_questionnaire_ui_state()
@@ -206,4 +206,3 @@ if __name__ == "__main__":
 
         message_box = st.empty()
 
-    st.write(st.session_state)

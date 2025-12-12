@@ -32,13 +32,13 @@ def retrieve_questionnaire(questionnaire_id: str):
     return [questionnaire_info, questions_info]
 
 def retrieve_questionnaire_by_response(response_id: str):
-    st.write(response_id)
+
     questionnaire_info = None
     try:
         response_info = responses_repo.get_response_by_id(response_id)
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
-    st.write(response_info)
+
     questions_info = None
     try:
         questions_info = questions_repo.get_questions_by_questionnaire_id(response_info.data[0]["questionnaires"]["id"])

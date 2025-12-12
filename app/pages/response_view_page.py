@@ -24,7 +24,6 @@ if __name__ == "__main__":
     if response_info[0] is None:
         st.error("Error during the response's info retrieval! Try again later")
     else:
-        st.write(response_info[0])
         st.title(response_info[0].data[0]["questionnaires"]['title'])
         st.write(f"Questionnaire description: {response_info[0].data[0]['questionnaires']['details']}")
 
@@ -36,6 +35,5 @@ if __name__ == "__main__":
         for answer in response_info[1].data:
             set_answer_layout(answer)
 
-    st.write(st.session_state)
 
     

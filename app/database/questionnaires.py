@@ -12,13 +12,14 @@ class Questionnaires:
             return self.supabase_client.table("questionnaires").select(
                     f"""
                     *,
-                    responses:responses!left(
+                    responses!left(
                         id,
                         user_id,
-                        questionnaire_id
+                        questionnaire_id,
+                        is_submitted
                     )
                     """
-                    + f"responses(user_id.eq.{user_id})").order("created_at", desc=True).execute()
+                ).eq("responses.user_id", user_id).eq("responses.is_submitted", True).order("created_at", desc=True).execute()
         except Exception as e:
             raise RuntimeError(f"Failed to retrieve questionnaires: {e}")
         
