@@ -32,7 +32,8 @@ if __name__ == "__main__":
         questionnaire_details = current_questionnaire[0].data[0]["questionnaires"]["details"]
         questionnaire_timestamp = current_questionnaire[0].data[0]["questionnaires"]["created_at"]
     else:
-        current_questionnaire = retrieve_questionnaire(st.session_state["current_questionnaire_id"])
+        current_questionnaire = retrieve_questionnaire(st.session_state["current_questionnaire_id"], questionnaires_repo, 
+        questions_repo, logger)
         questionnaire_id = current_questionnaire[0].data[0]["id"]
         questionnaire_title = current_questionnaire[0].data[0]["title"]
         questionnaire_details = current_questionnaire[0].data[0]["details"]

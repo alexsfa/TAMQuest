@@ -16,13 +16,13 @@ questions_repo = Questions(client)
 responses_repo = Responses(client)
 answers_repo = Answers(client)
 
-def retrieve_questionnaire(questionnaire_id: str):
+def retrieve_questionnaire(questionnaire_id: str, questionnaires_repo, questions_repo, logger):
     questionnaire_info = None
     try:
         questionnaire_info = questionnaires_repo.get_questionnaire_by_id(questionnaire_id)
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
-    
+
     questions_info = None
     try:
         questions_info = questions_repo.get_questions_by_questionnaire_id(questionnaire_id)
