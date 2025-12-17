@@ -31,9 +31,9 @@ def retrieve_questionnaire(questionnaire_id: str, questionnaires_repo, questions
 
     return [questionnaire_info, questions_info]
 
-def retrieve_questionnaire_by_response(response_id: str):
+def retrieve_questionnaire_by_response(response_id: str, responses_repo, questions_repo, logger):
 
-    questionnaire_info = None
+    response_info = None
     try:
         response_info = responses_repo.get_response_by_id(response_id)
     except RuntimeError as e:
@@ -41,13 +41,14 @@ def retrieve_questionnaire_by_response(response_id: str):
 
     questions_info = None
     try:
-        questions_info = questions_repo.get_questions_by_questionnaire_id(response_info.data[0]["questionnaires"]["id"])
+        if response_info is not None:
+            questions_info = questions_repo.get_questions_by_questionnaire_id(response_info.data[0]["questionnaires"]["id"])
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
 
     return [response_info, questions_info]
         
-def submit_questionnaire( app_name: str, q_details: str, user_id: str):
+def submit_questionnaire( app_name: str, q_details: str, user_id: str, questionnaire_repo, questions_repo, logger):
 
     if app_name.strip() == "":
         st.warning("Please enter an app name.")

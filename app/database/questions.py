@@ -9,7 +9,7 @@ class Questions:
     """
     def get_questions_by_questionnaire_id(self, questionnaire_id: str):
         try:
-            return(
+            return (
                 self.supabase_client.table("questions").select("id, question_text")
                 .eq("questionnaire_id", questionnaire_id).execute()
             )
@@ -19,4 +19,9 @@ class Questions:
 
     def create_questions(self, questions: list[dict]):
         # inserts the questions list as rows for the question table
-        return self.supabase_client.table("questions").insert(questions).execute()
+        try:
+            return (
+                 self.supabase_client.table("questions").insert(questions).execute()
+            )
+        except Exception as e:
+            raise RuntimeError(f"Failed to create the questions: {e}")

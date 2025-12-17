@@ -4,3 +4,5 @@ sqlalchemy>=2.0.41
 streamlit-authenticator
 supabase
 python-dotenv
+pytest
+pytest-mock

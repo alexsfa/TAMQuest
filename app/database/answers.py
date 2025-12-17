@@ -23,7 +23,7 @@ class Answers:
                 self.supabase_client.table("answers").insert(answers).execute()
             )
         except Exception as e:
-            raise RuntimeError(f"Failed to insert the answer: {e}")
+            raise RuntimeError(f"Failed to insert the answers: {e}")
 
     '''
     The update_answers function updates the answers of a specific resposnse (for users)
@@ -34,4 +34,4 @@ class Answers:
                 self.supabase_client.table("answers").upsert(answers, on_conflict=["response_id,question_id"]).execute()
             )
         except Exception as e:
-            raise RuntimeError(f"Failed to insert the answer: {e}")
+            raise RuntimeError(f"Failed to update the answers: {e}")
