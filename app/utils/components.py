@@ -4,7 +4,7 @@ from datetime import date, datetime
 
 from database.responses import Responses
 
-from services.generate_questionnaires import generate_tam_questions, generate_additional_tam_questions,ESSENTIAL_TAM_QUESTIONS, ADDITIONAL_TAM_QUESTIONS
+from services.generate_questionnaires import generate_tam_questions, generate_additional_tam_questions,ESSENTIAL_TAM_QUESTIONS, ADDITIONAL_TAM_QUESTIONS, CUSTOM_QUESTIONS
 
 from utils import supabase_client 
 
@@ -146,7 +146,7 @@ def set_response_ui(questions, draft_answers: list | None = None):
             )
         st.markdown(f"</br></br>", unsafe_allow_html=True)
 
-def preview_questionnaire(app_name: str):
+def preview_questionnaire(app_name: str, custom_questions: dict):
     if app_name.strip() == "":
         st.warning("Please enter an app name.")
         return
@@ -156,8 +156,15 @@ def preview_questionnaire(app_name: str):
     if "add_questions" in st.session_state and st.session_state["add_questions"]:
         questions.update(generate_additional_tam_questions(ADDITIONAL_TAM_QUESTIONS, app_name))
 
+    for category, question in custom_questions.items():
+        if category in questions.keys():
+            for q in question:
+                questions[category].append(q)
+
     for category, questions in questions.items():
         st.markdown(f"### **{category}**" + "\n".join(f"\n{i+1} - {q}" for i, q in enumerate(questions)))
+
+
 
 '''
 The function render_profile_form renders the form with the profile fields

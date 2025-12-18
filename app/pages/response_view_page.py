@@ -19,7 +19,7 @@ responses_repo = Responses(client)
 if __name__ == "__main__":
     
     menu(client)
-    response_info = retrieve_response_info(st.session_state["current_response_id"])
+    response_info = retrieve_response_info(st.session_state["current_response_id"], responses_repo, answers_repo, logger)
     
     if response_info[0] is None:
         st.error("Error during the response's info retrieval! Try again later")

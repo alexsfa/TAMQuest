@@ -74,6 +74,8 @@ ADDITIONAL_TAM_QUESTIONS = {
     ],
 }
 
+CUSTOM_QUESTIONS = {}
+
 def generate_tam_questions(questions: dict, app_name: str):
     formatted_questions = {}
     for category, questions in ESSENTIAL_TAM_QUESTIONS.items():
@@ -92,3 +94,13 @@ def generate_additional_tam_questions(questions: dict, app_name: str):
             ]
 
     return formatted_questions
+
+def add_custom_questions(custom_question: str, selected_category: str):
+    if selected_category in CUSTOM_QUESTIONS:
+        CUSTOM_QUESTIONS[selected_category].append(custom_question)
+    else:
+        CUSTOM_QUESTIONS[selected_category] = [custom_question]
+
+
+
+

@@ -25,7 +25,8 @@ def retrieve_questionnaire(questionnaire_id: str, questionnaires_repo, questions
 
     questions_info = None
     try:
-        questions_info = questions_repo.get_questions_by_questionnaire_id(questionnaire_id)
+        if questionnaire_info is not None:
+            questions_info = questions_repo.get_questions_by_questionnaire_id(questionnaire_id)
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
 
@@ -48,7 +49,7 @@ def retrieve_questionnaire_by_response(response_id: str, responses_repo, questio
 
     return [response_info, questions_info]
         
-def submit_questionnaire( app_name: str, q_details: str, user_id: str, questionnaire_repo, questions_repo, logger):
+def submit_questionnaire( app_name: str, q_details: str, user_id: str, questionnaires_repo, questions_repo, logger, custom_questions:dict | None=None):
 
     if app_name.strip() == "":
         st.warning("Please enter an app name.")
@@ -72,6 +73,11 @@ def submit_questionnaire( app_name: str, q_details: str, user_id: str, questionn
 
         if "add_questions" in st.session_state and st.session_state["add_questions"]:
             questions.update(generate_additional_tam_questions(ADDITIONAL_TAM_QUESTIONS, st.session_state.app_name))
+
+        for category, question in custom_questions.items():
+            if category in questions.keys():
+                for q in question:
+                    questions[category].append(q)
 
         questions_to_insert = []
         position = 1
@@ -97,7 +103,7 @@ def submit_questionnaire( app_name: str, q_details: str, user_id: str, questionn
 '''
 The retrieve_response_info function retrieves a response by id and its corresponding answers
 '''
-def retrieve_response_info(response_id: str):
+def retrieve_response_info(response_id: str, responses_repo, answers_repo, logger):
     
     response = None
     try:
@@ -107,7 +113,8 @@ def retrieve_response_info(response_id: str):
 
     answers = None
     try:
-        answers = answers_repo.get_answers_by_response_id(response_id)
+        if response is not None:
+            answers = answers_repo.get_answers_by_response_id(response_id)
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
 
