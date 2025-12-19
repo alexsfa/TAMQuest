@@ -8,7 +8,8 @@ from database.questionnaires import Questionnaires
 from database.questions import Questions
 from database.profiles import Profiles
 
-from services.generate_questionnaires import generate_tam_questions, generate_additional_tam_questions, add_custom_questions, ESSENTIAL_TAM_QUESTIONS, ADDITIONAL_TAM_QUESTIONS, CUSTOM_QUESTIONS
+from services.generate_questionnaires import (generate_tam_questions, generate_additional_tam_questions, add_custom_questions, 
+ESSENTIAL_TAM_QUESTIONS, ADDITIONAL_TAM_QUESTIONS, CUSTOM_QUESTIONS, add_custom_questions_categories)
 from services.database_service import submit_questionnaire
 
 from utils import supabase_client 
@@ -46,6 +47,7 @@ radio_options = ["Yes", "No"]
 def restart_questionnaire_ui_state():
     st.session_state.create_questionnaire = False
     st.session_state.add_questions = False
+    st.session_state.add_custom_question = False
     st.session_state.show_preview = False
     CUSTOM_QUESTIONS.clear()
     
@@ -65,7 +67,7 @@ if __name__ == "__main__":
         if st.session_state["profile_id"] is None:
             st.error("You have to create a profile before submitting a questionnaire")
         else:
-            st.text_input("The name of the app", key="app_name")
+            st.text_input("Subject of questionnaire (app's name)", key="app_name")
 
             st.text_area("Enter details about the questionnaire", height=150, key="q_details")
 
@@ -85,74 +87,76 @@ if __name__ == "__main__":
 
             with button_2:
                 if st.button("Add your own question"):
-                    st.session_state.add_your_own_question = not st.session_state.add_your_own_question
+                    st.session_state.add_custom_question = not st.session_state.add_custom_question
 
             with button_3:
                 if st.button("Preview Questionnaire"):
                     st.session_state.show_preview = not st.session_state.show_preview
 
-            additional_questions_container = st.container()
- 
-            with additional_questions_container:
-                if st.session_state.add_questions:
+        
+            if st.session_state.add_questions:
+                additional_questions_container = st.container(border=True)
+                with additional_questions_container:
+                    st.write("### **Add question categories**")
                     cols = st.columns(2)
 
                     for i, (label, key) in enumerate(additional_question_configs):
                         col = cols[i % 2]
                         col.checkbox(label, key=key)
-                else:
-                    additional_questions_container.empty()
 
-            custom_question_container = st.container()
+            
             selected_category = None
             custom_questions = {}
             
-            with custom_question_container:
-                if st.session_state.add_your_own_question:
-                    added_custom_questions_container = st.container(border=True)
-                    res_list = [category for category in ESSENTIAL_TAM_QUESTIONS]
-                    res_list.extend(ADDITIONAL_TAM_QUESTIONS.keys())
+            if st.session_state.add_custom_question:
+                custom_question_container = st.container(border=True)
+                with custom_question_container:
+                    if st.session_state.add_custom_question:
+                        added_custom_questions_container = st.container(border=True)
+                        res_list = [category for category in ESSENTIAL_TAM_QUESTIONS]
+                        res_list.extend(add_custom_questions_categories())
 
-                    
+                        st.text_input("Add your own question", key="custom_question")
+                        selected_category = st.selectbox("Choose category", res_list)
 
-                    st.text_input("Add your own question", key="custom_question")
-                    selected_category = st.selectbox("Choose category", res_list)
+                        if st.button("Save your custom question"):
+                            add_custom_questions(st.session_state["custom_question"], selected_category)
 
-                    if st.button("Save your custom question"):
-                        add_custom_questions(st.session_state["custom_question"], selected_category)
-                    
-                    st.write("### **Custom Questions**")
-
-                    if CUSTOM_QUESTIONS:
                         with added_custom_questions_container: 
-                            
-                            for category,list_of_questions in CUSTOM_QUESTIONS.items():
-                                st.markdown(f"##### {category}")
+                            st.write("### **Custom Questions**")
+                            if CUSTOM_QUESTIONS:
+                                for category,list_of_questions in CUSTOM_QUESTIONS.items():
+                                    st.markdown(f"##### {category}")
 
-                                if not list_of_questions:
-                                    st.write(f"All custom questions of {category} have been deleted.")
-                                else:
-                                    for i, question in enumerate(list_of_questions):
-                                        col_1, col_2 = st.columns(2)
-                                        with col_1:
-                                            st.markdown(f"\n{i+1} - {question}")
+                                    if not list_of_questions:
+                                        st.write(f"All custom questions of {category} have been deleted.")
+                                    else:
+                                        for i, question in enumerate(list_of_questions):
+                                            col_1, col_2 = st.columns(2)
+                                            with col_1:
+                                                st.markdown(f"\n{i+1} - {question}")
                                 
-                                        with col_2:
-                                            if st.button("Delete question", key=f"{category}_custom_q_{i}"):
-                                                del CUSTOM_QUESTIONS[category][i]
-                                                st.rerun()
+                                            with col_2:
+                                                if st.button("Delete question", key=f"{category}_custom_q_{i}"):
+                                                    del CUSTOM_QUESTIONS[category][i]
+                                                    st.rerun()
 
-                    else:
-                        with added_custom_questions_container:
-                            st.write("No custom questions added yet.")
+                            else:
+                                with added_custom_questions_container:
+                                    st.write("No custom questions added yet.")
 
-                
-
-            questionnaire_preview_container = st.container()
-
-            with questionnaire_preview_container:
-                if st.session_state.show_preview:
+            
+            if st.session_state.show_preview:
+                questionnaire_preview_container = st.container(border=True)
+                with questionnaire_preview_container:
+                    st.write("### **Preview Questionnaire**")
                     preview_questionnaire(st.session_state["app_name"], CUSTOM_QUESTIONS)
+
+            ##########################################
+
+            st.write("### **Likert scale**")
+
+            ##########################################
 
             if st.button("Submit Questionnaire"):
                 submit_result = []

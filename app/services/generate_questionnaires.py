@@ -95,7 +95,20 @@ def generate_additional_tam_questions(questions: dict, app_name: str):
 
     return formatted_questions
 
+def add_custom_questions_categories():
+    additional_custom_questions_categories = []
+    for category in ADDITIONAL_TAM_QUESTIONS.keys():
+        if category in st.session_state and st.session_state[category]:
+            additional_custom_questions_categories.append(category)
+    
+    return additional_custom_questions_categories
+
 def add_custom_questions(custom_question: str, selected_category: str):
+
+    if custom_question.strip() == "":
+        st.warning("Please enter an app name.")
+        return
+
     if selected_category in CUSTOM_QUESTIONS:
         CUSTOM_QUESTIONS[selected_category].append(custom_question)
     else:

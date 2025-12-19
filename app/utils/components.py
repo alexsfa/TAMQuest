@@ -148,7 +148,7 @@ def set_response_ui(questions, draft_answers: list | None = None):
 
 def preview_questionnaire(app_name: str, custom_questions: dict):
     if app_name.strip() == "":
-        st.warning("Please enter an app name.")
+        st.warning("Please enter a custom question.")
         return
 
     questions = generate_tam_questions(ESSENTIAL_TAM_QUESTIONS, app_name)
@@ -162,7 +162,7 @@ def preview_questionnaire(app_name: str, custom_questions: dict):
                 questions[category].append(q)
 
     for category, questions in questions.items():
-        st.markdown(f"### **{category}**" + "\n".join(f"\n{i+1} - {q}" for i, q in enumerate(questions)))
+        st.markdown(f"#### **{category}**" + "\n".join(f"\n{i+1} - {q}" for i, q in enumerate(questions)))
 
 
 
