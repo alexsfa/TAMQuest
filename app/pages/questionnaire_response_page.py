@@ -7,7 +7,8 @@ from database.questions import Questions
 from database.responses import Responses
 from database.answers import Answers
 
-from services.database_service import retrieve_questionnaire_by_response, retrieve_questionnaire, submit_response
+from services.response_services import  submit_response
+from services.questionnaire_services import retrieve_questionnaire, retrieve_questionnaire_by_response
 
 from utils import supabase_client 
 from utils.menu import menu

@@ -8,10 +8,10 @@ from database.questionnaires import Questionnaires
 from database.questions import Questions
 from database.profiles import Profiles
 
-from services.generate_questionnaires import (generate_tam_questions, generate_additional_tam_questions, add_custom_questions, 
-ESSENTIAL_TAM_QUESTIONS, ADDITIONAL_TAM_QUESTIONS, CUSTOM_QUESTIONS, add_custom_questions_categories)
-from services.database_service import submit_questionnaire
+from services.questionnaire_services import submit_questionnaire
 
+from utils.generate_questionnaires import (generate_tam_questions, generate_additional_tam_questions, add_custom_questions, 
+ESSENTIAL_TAM_QUESTIONS, ADDITIONAL_TAM_QUESTIONS, CUSTOM_QUESTIONS, add_custom_questions_categories)
 from utils import supabase_client 
 from utils.menu import menu
 from utils.logger_config import logger
@@ -155,13 +155,18 @@ if __name__ == "__main__":
             ##########################################
 
             st.write("### **Likert scale**")
+            default_labels = ['Strongly disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly agree']
+
+            for i,label in enumerate(default_labels):
+                st.text_input(f"Level {i}", key=f"likert_scale_lvl_{i}", placeholder=label)
 
             ##########################################
 
             if st.button("Submit Questionnaire"):
                 submit_result = []
                 submit_result = submit_questionnaire(st.session_state["app_name"], st.session_state["q_details"], st.session_state["user_id"], questionnaires_repo, questions_repo, logger, CUSTOM_QUESTIONS)
-                if submit_result is None:
+                if not all(submit_result):
+                    st.write(submit_result)
                     st.error("Error during questionnaire submission! Try again later!")
                 else:
                     restart_questionnaire_ui_state()

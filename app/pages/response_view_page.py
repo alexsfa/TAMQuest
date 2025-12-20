@@ -5,7 +5,7 @@ from datetime import datetime
 from database.answers import Answers
 from database.responses import Responses
 
-from services.database_service import retrieve_response_info
+from services.response_service import retrieve_response_info
 
 from utils import supabase_client 
 from utils.menu import menu
