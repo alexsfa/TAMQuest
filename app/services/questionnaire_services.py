@@ -65,14 +65,29 @@ def submit_questionnaire_likert_scale(questionnaire_id:str, likert_scale_options
 
     if q_likert_scale_info is not None:
 
+        likert_scale_options_insert = []
         likert_scale_options_info = None
         try:
-            likert_scale_options_info = likert_scale_options_repo.create_likert_scale_options()
+            for position, label in enumerate(likert_scale_options):
+                likert_scale_options_insert.append({
+                    'likert_scale_id': q_likert_scale_info.data[0]["id"],
+                    'value': position,
+                    'label': label
+            })
+            likert_scale_options_info = likert_scale_options_repo.create_likert_scale_options(likert_scale_options_insert)
         except RuntimeError as e:
             logger.error(f"Database error: {e}")
 
-
     return q_likert_scale_info
+
+def collect_likert_scale_options():
+    likert_scale_levels=[]
+
+    for i in range(st.session_state["questionnaire_likert_scale_levels"]):
+        likert_scale_levels.append(st.session_state[f"likert_scale_lvl_{i+1}"])
+
+    return likert_scale_levels
+
 
 def submit_questionnaire( app_name: str, q_details: str, user_id: str, questionnaires_repo, questions_repo, logger, custom_questions:dict | None=None):
 
@@ -121,6 +136,6 @@ def submit_questionnaire( app_name: str, q_details: str, user_id: str, questionn
         except RuntimeError as e:
             logger.error("Database error: {e}")
 
-        likert_scale_insert = submit_questionnaire_likert_scale(questionnaire.data[0]["id"])
+        likert_scale_insert = submit_questionnaire_likert_scale(questionnaire.data[0]["id"], collect_likert_scale_options())
 
         return [questionnaire, questions_insert, likert_scale_insert]

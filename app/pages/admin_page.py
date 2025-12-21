@@ -15,7 +15,7 @@ ESSENTIAL_TAM_QUESTIONS, ADDITIONAL_TAM_QUESTIONS, CUSTOM_QUESTIONS, add_custom_
 from utils import supabase_client 
 from utils.menu import menu
 from utils.logger_config import logger
-from utils.components import create_questionnaire_card, create_profile_card, preview_questionnaire
+from utils.components import create_questionnaire_card, create_profile_card, preview_questionnaire, likert_scale_customization_ui
 
 from app import redirect_to_respond_page
 
@@ -49,6 +49,7 @@ def restart_questionnaire_ui_state():
     st.session_state.add_questions = False
     st.session_state.add_custom_question = False
     st.session_state.show_preview = False
+    st.session_state["questionnaire_likert_scale_levels"] = 2
     CUSTOM_QUESTIONS.clear()
     
 if __name__ == "__main__":
@@ -152,15 +153,7 @@ if __name__ == "__main__":
                     st.write("### **Preview Questionnaire**")
                     preview_questionnaire(st.session_state["app_name"], CUSTOM_QUESTIONS)
 
-            ##########################################
-
-            st.write("### **Likert scale**")
-            default_labels = ['Strongly disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly agree']
-
-            for i,label in enumerate(default_labels):
-                st.text_input(f"Level {i}", key=f"likert_scale_lvl_{i}", placeholder=label)
-
-            ##########################################
+            likert_scale_customization_ui()
 
             if st.button("Submit Questionnaire"):
                 submit_result = []

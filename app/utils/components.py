@@ -4,19 +4,19 @@ from datetime import date, datetime
 
 from database.responses import Responses
 
-from services.generate_questionnaires import generate_tam_questions, generate_additional_tam_questions,ESSENTIAL_TAM_QUESTIONS, ADDITIONAL_TAM_QUESTIONS, CUSTOM_QUESTIONS
+from utils.generate_questionnaires import generate_tam_questions, generate_additional_tam_questions,ESSENTIAL_TAM_QUESTIONS, ADDITIONAL_TAM_QUESTIONS, CUSTOM_QUESTIONS
 
 from utils import supabase_client 
 
 client = supabase_client.get_client()
 responses_repo = Responses(client)
 
-LIKERT_SCALE = [
-    (0,"Strongly disagree"), 
-    (1,"Disagree"), 
-    (2,"Neutral"), 
-    (3,"Agree"), 
-    (4,"Strongly agree")
+DEFAULT_LIKERT_SCALE = [
+    "Strongly disagree",
+    "Disagree",
+    "Neutral",
+    "Agree",
+    "Strongly agree"
 ]
 
 def format_time(timestamp: str):
@@ -209,5 +209,49 @@ def create_responses_management_ui(response: dict, redirection_button: str, call
                 st.error(f"Error during the response's deletion")
             else:
                 st.rerun()
+
+def likert_scale_customization_ui():
+    ls_customization_container = st.container(border=True)
+
+    with ls_customization_container:
+        col_1, col_2, col_3, col_4 = st.columns([1,1,1,1])
+
+        with col_1:
+            st.markdown("""
+                <h3 style='margin-bottom:-30px; padding-top:2px; vertical-align:top; display:block;'>Likert scale</h3>""", unsafe_allow_html=True)
+    
+        with col_2:
+            if st.button("Increment levels"):
+                if st.session_state["questionnaire_likert_scale_levels"] == 7:
+                    pass
+                else:
+                    st.session_state["questionnaire_likert_scale_levels"] += 1
+
+        with col_3:
+            if st.button("Decrement levels"):
+                if st.session_state["questionnaire_likert_scale_levels"] == 2:
+                    pass
+                else:
+                    st.session_state["questionnaire_likert_scale_levels"] -= 1
+
+        with col_4:
+            if st.button("Use default scale"):
+                st.session_state["questionnaire_likert_scale_levels"] = 5
+
+                for i in range(st.session_state["questionnaire_likert_scale_levels"]):
+                    st.session_state[f"likert_scale_lvl_{i+1}"]=DEFAULT_LIKERT_SCALE[i]
+
+
+        for i in range(st.session_state["questionnaire_likert_scale_levels"]):
+            st.text_input(f"Level {i+1}", key=f"likert_scale_lvl_{i+1}")
+
+
+
+
+
+
+
+
+
 
 
