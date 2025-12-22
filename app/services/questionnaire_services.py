@@ -28,14 +28,27 @@ def retrieve_questionnaire(questionnaire_id: str, questionnaires_repo, questions
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
 
-    questions_info = None
-    try:
-        if questionnaire_info is not None:
+    if questionnaire_info is not None:
+        questions_info = None
+        try:
             questions_info = questions_repo.get_questions_by_questionnaire_id(questionnaire_id)
-    except RuntimeError as e:
-        logger.error(f"Database error: {e}")
+        except RuntimeError as e:
+            logger.error(f"Database error: {e}")
 
-    return [questionnaire_info, questions_info]
+        likert_scale_info = None
+        try:
+            likert_scale_info = likert_scales_repo.get_likert_scale_by_questionnaire_id(questionnaire_id)
+        except RuntimeError as e:
+            logger.error(f"Database error: {e}")
+
+        if likert_scale_info is not None:
+            likert_scale_options = None
+            try:
+                likert_scale_options = likert_scale_options_repo.get_options_by_likert_scale_id(likert_scale_info.data[0]["id"])
+            except RuntimeError as e:
+                logger.error(f"Database error: {e}")
+
+    return [questionnaire_info, questions_info, likert_scale_info, likert_scale_options ]
 
 
 def retrieve_questionnaire_by_response(response_id: str, responses_repo, questions_repo, logger):
@@ -53,8 +66,25 @@ def retrieve_questionnaire_by_response(response_id: str, responses_repo, questio
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
 
-    return [response_info, questions_info]
+    likert_scale_info = None
+    try:
+        likert_scale_info = likert_scales_repo.get_likert_scale_by_questionnaire_id(response_info.data[0]["questionnaires"]["id"])
+    except RuntimeError as e:
+        logger.error(f"Database error: {e}")
 
+    if likert_scale_info is not None:
+        likert_scale_options = None
+        try:
+            likert_scale_options = likert_scale_options_repo.get_options_by_likert_scale_id(likert_scale_info.data[0]["id"])
+        except RuntimeError as e:
+            logger.error(f"Database error: {e}")
+
+    return [response_info, questions_info, likert_scale_info, likert_scale_options]
+
+"""
+The submit_questionnaire_likert_scale function submits the likert scale of the questionnaire
+and its corresponding options.
+"""
 def submit_questionnaire_likert_scale(questionnaire_id:str, likert_scale_options:list):
 
     q_likert_scale_info = None
@@ -80,6 +110,10 @@ def submit_questionnaire_likert_scale(questionnaire_id:str, likert_scale_options
 
     return q_likert_scale_info
 
+"""
+The collect_likert_scale_options function returns a list with the likert scale level values
+that the admin has submitted.
+"""
 def collect_likert_scale_options():
     likert_scale_levels=[]
 
@@ -99,6 +133,12 @@ def submit_questionnaire( app_name: str, q_details: str, user_id: str, questionn
         questionnaire_details = q_details.strip()
     else:
         questionnaire_details = None
+
+    questionnaire_likert_scale_options = collect_likert_scale_options()
+    if not all(questionnaire_likert_scale_options):
+        st.warning("Please enter values for all the likert scale levels")
+        return
+    
 
     questionnaire = None
     try:
@@ -136,6 +176,7 @@ def submit_questionnaire( app_name: str, q_details: str, user_id: str, questionn
         except RuntimeError as e:
             logger.error("Database error: {e}")
 
-        likert_scale_insert = submit_questionnaire_likert_scale(questionnaire.data[0]["id"], collect_likert_scale_options())
+        
+        likert_scale_insert = submit_questionnaire_likert_scale(questionnaire.data[0]["id"], questionnaire_likert_scale_options)
 
         return [questionnaire, questions_insert, likert_scale_insert]

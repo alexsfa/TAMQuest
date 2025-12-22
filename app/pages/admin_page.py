@@ -158,9 +158,8 @@ if __name__ == "__main__":
             if st.button("Submit Questionnaire"):
                 submit_result = []
                 submit_result = submit_questionnaire(st.session_state["app_name"], st.session_state["q_details"], st.session_state["user_id"], questionnaires_repo, questions_repo, logger, CUSTOM_QUESTIONS)
-                if not all(submit_result):
-                    st.write(submit_result)
-                    st.error("Error during questionnaire submission! Try again later!")
+                if (submit_result is None) or (not all(submit_result)):
+                    pass
                 else:
                     restart_questionnaire_ui_state()
                     st.success("Your questionnaire has been submitted")

@@ -106,7 +106,7 @@ def add_custom_questions_categories():
 def add_custom_questions(custom_question: str, selected_category: str):
 
     if custom_question.strip() == "":
-        st.warning("Please enter an app name.")
+        st.warning("Please enter a question.")
         return
 
     if selected_category in CUSTOM_QUESTIONS:

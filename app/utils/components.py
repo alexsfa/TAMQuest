@@ -107,7 +107,7 @@ def set_answer_layout(answer: dict):
     st.markdown(f"<h5 style='margin-bottom:2px'>{answer['questions']['position']}. {answer['questions']['question_text']}</h5>", unsafe_allow_html=True)
     st.markdown(f"<h5 style='margin-bottom:'>Answer: {answer['selected_option_value']}", unsafe_allow_html=True)
 
-def set_response_ui(questions, draft_answers: list | None = None):
+def set_response_ui(questions, likert_scale_options:list, draft_answers: list | None = None):
 
     if draft_answers is None:
         for question_index, question in enumerate(questions.data, start=1):
@@ -117,7 +117,7 @@ def set_response_ui(questions, draft_answers: list | None = None):
             st.markdown(f"<h5 style='margin-bottom:-10px'>{question_index}. {question['question_text']}</h5>", unsafe_allow_html=True)
             selected_answer = st.radio(
                 label=question['question_text'],     
-                options=[option for (num, option) in LIKERT_SCALE],  
+                options=[option["label"] for option in likert_scale_options.data],  
                 key=question_key,
                 horizontal=True,
                 index=None,
@@ -128,7 +128,7 @@ def set_response_ui(questions, draft_answers: list | None = None):
     else:
         # check which selected_option_value field of draft_answers matches a scale of LIKERT SCALE list
         indexes = [
-            next((i for i, (num, text) in enumerate(LIKERT_SCALE) if text == ans["selected_option_value"]), None)
+            next((item["value"] for item in likert_scale_options.data if item["label"] == ans["selected_option_value"]), None)
             for ans in draft_answers.data
         ]
         for question_index, question in enumerate(questions.data, start=1):
@@ -138,7 +138,7 @@ def set_response_ui(questions, draft_answers: list | None = None):
             st.markdown(f"<h5 style='margin-bottom:-10px'>{question_index}. {question['question_text']}</h5>", unsafe_allow_html=True)
             selected_answer = st.radio(
                 label=question['question_text'],               
-                options=[option for (num, option) in LIKERT_SCALE],  
+                options=[option["label"] for option in likert_scale_options.data],  
                 key=question_key,
                 horizontal=True,
                 index=indexes[question_index - 1],
@@ -148,7 +148,7 @@ def set_response_ui(questions, draft_answers: list | None = None):
 
 def preview_questionnaire(app_name: str, custom_questions: dict):
     if app_name.strip() == "":
-        st.warning("Please enter a custom question.")
+        st.warning("Please enter the app's name.")
         return
 
     questions = generate_tam_questions(ESSENTIAL_TAM_QUESTIONS, app_name)

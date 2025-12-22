@@ -66,7 +66,7 @@ if __name__ == "__main__":
         st.error("Error during draft search! Please try again later")
         st.stop()
     elif len(response_draft_info.data) == 0:
-        set_response_ui(questions)
+        set_response_ui(questions, current_questionnaire[3])
     else:
         draft_answers = None
         try:
@@ -78,9 +78,9 @@ if __name__ == "__main__":
             st.error("Error during draft answers retrieval!")
             st.stop()
         elif len(draft_answers.data) == 0:
-            set_response_ui(questions)
+            set_response_ui(questions, current_questionnaire[3])
         else:
-            set_response_ui(questions, draft_answers)
+            set_response_ui(questions, current_questionnaire[3], draft_answers)
     
     message_box = st.empty()
     col1, col2 = st.columns([1,1])
