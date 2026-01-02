@@ -218,7 +218,8 @@ def likert_scale_customization_ui():
 
         with col_1:
             st.markdown("""
-                <h3 style='margin-bottom:-30px; padding-top:2px; vertical-align:top; display:block;'>Likert scale</h3>""", unsafe_allow_html=True)
+                <h3 style='margin-bottom:-30px; padding-top:2px; vertical-align:top; display:block;'>Likert scale</h3>""", unsafe_allow_html=True
+            )
     
         with col_2:
             if st.button("Increment levels"):

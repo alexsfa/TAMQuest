@@ -16,8 +16,7 @@ from utils import supabase_client
 from utils.menu import menu
 from utils.logger_config import logger
 from utils.components import create_questionnaire_card, create_profile_card, preview_questionnaire, likert_scale_customization_ui
-
-from app import redirect_to_respond_page
+from utils.redirections import redirect_to_respond_page, redirect_to_results_page
 
 current_page = "admin_page"
 
@@ -133,9 +132,12 @@ if __name__ == "__main__":
                                         st.write(f"All custom questions of {category} have been deleted.")
                                     else:
                                         for i, question in enumerate(list_of_questions):
-                                            col_1, col_2 = st.columns(2)
+                                            col_1, col_2 = st.columns([8,4])
                                             with col_1:
-                                                st.markdown(f"\n{i+1} - {question}")
+                                                st.markdown(
+                                                f"""<p style='font-size:medium; margin-top:8px;'>\n{i+1}. {question}</p>"""
+                                                , unsafe_allow_html=True
+                                            )
                                 
                                             with col_2:
                                                 if st.button("Delete question", key=f"{category}_custom_q_{i}"):
@@ -182,20 +184,25 @@ if __name__ == "__main__":
 
         for item in questionnaire_list:
             
-            col1, col2, col3 = st.columns([5,1,1])
+            col1, col2, col3= st.columns([5,1,1])
 
             with col1:
                 create_questionnaire_card(item)
 
             if len(item["responses"]) == 0:
-                with col2:
+
+                with col3:
                     respond_key = f"respond_{item['id']}"
                     if st.button("Respond", key=respond_key):
                         redirect_to_respond_page(item['id'])
 
                 message_box = st.empty()
 
-                with col3:
+                with col2:
+                    results_key = f"show_results_{item['id']}"
+                    if st.button("Results", key=results_key):
+                        redirect_to_results_page(item['id'])
+
                     delete_key = f"delete_{item['id']}"
                     if st.button("Delete", key=delete_key):
                         response = None
@@ -210,9 +217,13 @@ if __name__ == "__main__":
         
                     st.write("\n")
             else:
-                message_box = st.empty()
-
                 with col2:
+                    results_key = f"show_results_{item['id']}"
+                    if st.button("Results", key=results_key):
+                        redirect_to_results_page(item['id'])
+
+                    message_box = st.empty()
+
                     delete_key = f"delete_{item['id']}"
                     if st.button("Delete", key=delete_key):
                         response = None
