@@ -152,11 +152,6 @@ def submit_questionnaire( app_name: str, q_details: str, user_id: str, questionn
         if "add_questions" in st.session_state and st.session_state["add_questions"]:
             questions.update(generate_additional_tam_questions(ADDITIONAL_TAM_QUESTIONS, app_name))
 
-        for category, question in custom_questions.items():
-            if category in questions.keys():
-                for q in question:
-                    questions[category].append(q)
-
         questions_to_insert = []
         position = 1
 
@@ -166,9 +161,24 @@ def submit_questionnaire( app_name: str, q_details: str, user_id: str, questionn
                     "questionnaire_id": questionnaire.data[0]["id"],
                     "question_text": question_text,
                     "position": position,
-                    "category": category
+                    "category": category,
+                    "is_custom": False,
+                    "is_negative": False
                 })
                 position += 1
+
+            if category in custom_questions:
+                for qs in custom_questions[category]:
+                    question_text, negative_wording = qs
+                    questions_to_insert.append({
+                        "questionnaire_id": questionnaire.data[0]["id"],
+                        "question_text": question_text,
+                        "position": position,
+                        "category": category,
+                        "is_custom": True,
+                        "is_negative": negative_wording
+                    })
+                    position += 1
 
         questions_insert = None
         try:   

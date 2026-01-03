@@ -6,6 +6,7 @@ def redirect_to_respond_page(questionnaire_id: str):
     st.switch_page("pages/questionnaire_response_page.py")
 
 def redirect_to_results_page(questionnaire_id: str):
+    st.session_state["current_questionnaire_id"] = questionnaire_id
     st.switch_page("pages/questionnaire_results_page.py")
 
 def redirect_to_edit_page(response_id: str):

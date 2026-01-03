@@ -103,16 +103,20 @@ def add_custom_questions_categories():
     
     return additional_custom_questions_categories
 
-def add_custom_questions(custom_question: str, selected_category: str):
+def add_custom_questions(custom_question: str, selected_category: str, selected_wording: str):
 
     if custom_question.strip() == "":
         st.warning("Please enter a question.")
         return
 
+    negative_wording = False
+    if selected_wording is "Negative":
+        negative_wording = True
+
     if selected_category in CUSTOM_QUESTIONS:
-        CUSTOM_QUESTIONS[selected_category].append(custom_question)
+        CUSTOM_QUESTIONS[selected_category].append((custom_question, negative_wording))
     else:
-        CUSTOM_QUESTIONS[selected_category] = [custom_question]
+        CUSTOM_QUESTIONS[selected_category] = [(custom_question, negative_wording)]
 
 
 

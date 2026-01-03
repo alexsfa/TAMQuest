@@ -118,9 +118,10 @@ if __name__ == "__main__":
 
                         st.text_input("Add your own question", key="custom_question")
                         selected_category = st.selectbox("Choose category", res_list)
+                        question_wording = st.selectbox("Select wording", ["Positive", "Negative"])
 
                         if st.button("Save your custom question"):
-                            add_custom_questions(st.session_state["custom_question"], selected_category)
+                            add_custom_questions(st.session_state["custom_question"], selected_category, question_wording)
 
                         with added_custom_questions_container: 
                             st.write("### **Custom Questions**")
@@ -135,7 +136,7 @@ if __name__ == "__main__":
                                             col_1, col_2 = st.columns([8,4])
                                             with col_1:
                                                 st.markdown(
-                                                f"""<p style='font-size:medium; margin-top:8px;'>\n{i+1}. {question}</p>"""
+                                                f"""<p style='font-size:medium; margin-top:8px;'>\n{i+1}. {question[0]}</p>"""
                                                 , unsafe_allow_html=True
                                             )
                                 

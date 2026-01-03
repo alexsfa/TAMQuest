@@ -105,7 +105,7 @@ def create_profile_card(profile: dict):
 def set_answer_layout(answer: dict):
     st.markdown(f"</br></br>", unsafe_allow_html=True)
     st.markdown(f"<h5 style='margin-bottom:2px'>{answer['questions']['position']}. {answer['questions']['question_text']}</h5>", unsafe_allow_html=True)
-    st.markdown(f"<h5 style='margin-bottom:'>Answer: {answer['selected_option_value']}", unsafe_allow_html=True)
+    st.markdown(f"<h5 style='margin-bottom:'>Answer: {answer['likert_scale_options']['label']}", unsafe_allow_html=True)
 
 def set_response_ui(questions, likert_scale_options:list, draft_answers: list | None = None):
 
@@ -128,9 +128,10 @@ def set_response_ui(questions, likert_scale_options:list, draft_answers: list | 
     else:
         # check which selected_option_value field of draft_answers matches a scale of LIKERT SCALE list
         indexes = [
-            next((item["value"] for item in likert_scale_options.data if item["label"] == ans["selected_option_value"]), None)
+            next((item["value"] for item in likert_scale_options.data if item["id"] == ans["selected_option"]), None)
             for ans in draft_answers.data
         ]
+        st.write(indexes)
         for question_index, question in enumerate(questions.data, start=1):
             question_key = f"q{question_index}_answer"
 

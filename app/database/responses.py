@@ -15,6 +15,15 @@ class Responses:
         except Exception as e:
             raise RuntimeError(f"Failed to retrieve responses: {e}")
 
+    def get_all_responses_by_questionnaire_id(self, questionnaire_id: str):
+        try:
+            return (
+                self.supabase_client.table("responses").select("questionnaires(*), profiles(*), id, submitted_at, is_submitted")
+                .eq("questionnaire_id", questionnaire_id).eq("is_submitted", True).execute()
+            )
+        except Exception as e:
+            raise RuntimeError(f"Failed to retrieve responses: {e}")   
+
     """
     The get_response_by_id function gets the response that matches with the response_id parameter (for users)
     """

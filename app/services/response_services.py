@@ -33,7 +33,7 @@ def retrieve_response_info(response_id: str, responses_repo, answers_repo, logge
 
     return [response, answers]
 
-def submit_response(user_id: str,questionnaire_id: str, get_submitted: bool, questions):
+def submit_response(user_id: str,questionnaire_id: str, get_submitted: bool, questions, likert_scale_options:list):
 
     # checking if all the questions have been answered
     all_answered = all(
@@ -72,11 +72,14 @@ def submit_response(user_id: str,questionnaire_id: str, get_submitted: bool, que
         # create the list with the answer table inserts with response_id the new response insert
         answer_list = []
         for index,question in enumerate(questions.data):
+
             key = f"q{index+1}_answer"
+            matching_option = next((opt["id"] for opt in likert_scale_options.data if opt["label"] == st.session_state[key]), None)
+
             answer_list.append({ 
                 "response_id": response_insert.data[0]["id"], 
                 "question_id": question["id"], 
-                "selected_option_value": st.session_state[key]
+                "selected_option": matching_option
             })
 
         # insert the answer list items in the answer's table
@@ -97,11 +100,14 @@ def submit_response(user_id: str,questionnaire_id: str, get_submitted: bool, que
         answers_list = []
             
         for index,question in enumerate(questions.data):
+
             key = f"q{index+1}_answer"
+            matching_option = next((opt["id"] for opt in likert_scale_options.data if opt["label"] == st.session_state[key]), None)
+
             answers_list.append({ 
                 "response_id": response_info.data[0]["id"], 
                 "question_id": question["id"], 
-                "selected_option_value": st.session_state[key]
+                "selected_option": matching_option
             })
 
         answers_update = None

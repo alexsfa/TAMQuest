@@ -87,7 +87,7 @@ if __name__ == "__main__":
 
     with col1:
         if st.button("Submit"):
-            submission_state = submit_response(st.session_state["user_id"], questionnaire_id, True, questions)
+            submission_state = submit_response(st.session_state["user_id"], questionnaire_id, True, questions, current_questionnaire[3])
             if submission_state is None:
                 message_box.error("Error during your response's submission")
             else:
@@ -95,7 +95,7 @@ if __name__ == "__main__":
 
     with col2:
         if st.button("Save Draft"):
-            submission_state = submit_response(st.session_state["user_id"], questionnaire_id, False, questions)
+            submission_state = submit_response(st.session_state["user_id"], questionnaire_id, False, questions, current_questionnaire[3])
             if submission_state is None:
                 message_box.error("Error during your draft's submission")
             else:

@@ -8,7 +8,7 @@ class Answers:
     def get_answers_by_response_id(self, response_id: str):
         try:
             return (
-                self.supabase_client.table("answers").select("*, questions(question_text, position)")
+                self.supabase_client.table("answers").select("*, questions(question_text, position), likert_scale_options(label)")
                 .eq("response_id", response_id).order("questions(position)").execute()
             )
         except Exception as e:

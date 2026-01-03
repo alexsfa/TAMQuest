@@ -5,7 +5,7 @@ class Likert_scale_options:
     def get_options_by_likert_scale_id(self, likert_scale_id:str):
         try:
             return (
-                self.supabase_client.table("likert_scale_options").select("value, label").eq("likert_scale_id", likert_scale_id)
+                self.supabase_client.table("likert_scale_options").select("id, value, label").eq("likert_scale_id", likert_scale_id)
                 .order("value").execute()
             )
         except Exception as e:

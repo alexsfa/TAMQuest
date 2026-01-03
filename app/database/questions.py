@@ -10,7 +10,7 @@ class Questions:
     def get_questions_by_questionnaire_id(self, questionnaire_id: str):
         try:
             return (
-                self.supabase_client.table("questions").select("id, question_text")
+                self.supabase_client.table("questions").select("id, question_text, category")
                 .eq("questionnaire_id", questionnaire_id).execute()
             )
         except Exception as e:
