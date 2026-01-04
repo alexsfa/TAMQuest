@@ -50,7 +50,7 @@ class Questionnaires:
     def create_questionnaire(self, app_name:str, questionnaire_details: str, user_id: str):
         try:
             return self.supabase_client.table("questionnaires").insert({
-                        "title": f"TAM Questionnaire for {app_name}",
+                        "title": f"{app_name} TAM Questionnaire",
                         "details": questionnaire_details,
                         "created_by": user_id
                     }).execute()

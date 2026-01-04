@@ -1,3 +1,4 @@
+matplotlib
 streamlit[auth]>=1.47.0
 watchdog
 sqlalchemy>=2.0.41

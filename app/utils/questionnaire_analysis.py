@@ -1,3 +1,0 @@
-
-def mean_score():
-    

@@ -101,7 +101,7 @@ def submit_questionnaire_likert_scale(questionnaire_id:str, likert_scale_options
             for position, label in enumerate(likert_scale_options):
                 likert_scale_options_insert.append({
                     'likert_scale_id': q_likert_scale_info.data[0]["id"],
-                    'value': position,
+                    'value': position + 1,
                     'label': label
             })
             likert_scale_options_info = likert_scale_options_repo.create_likert_scale_options(likert_scale_options_insert)
@@ -156,6 +156,7 @@ def submit_questionnaire( app_name: str, q_details: str, user_id: str, questionn
         position = 1
 
         for category, qs in questions.items():
+            is_negative = True if category == "Computer Anxiety" else False
             for question_text in qs:
                 questions_to_insert.append({
                     "questionnaire_id": questionnaire.data[0]["id"],
@@ -163,7 +164,7 @@ def submit_questionnaire( app_name: str, q_details: str, user_id: str, questionn
                     "position": position,
                     "category": category,
                     "is_custom": False,
-                    "is_negative": False
+                    "is_negative": is_negative
                 })
                 position += 1
 
