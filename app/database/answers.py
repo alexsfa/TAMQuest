@@ -17,7 +17,7 @@ class Answers:
     def get_answers_by_questionnaire_id(self, questionnaire_id: str):
         try:
             return (
-                self.supabase_client.table("answers").select("questions!inner(questionnaire_id, category, is_negative), likert_scale_options!inner(value)")
+                self.supabase_client.table("answers").select("questions!inner(questionnaire_id, category, is_negative), likert_scale_options!inner(value, label)")
                 .eq("questions.questionnaire_id", questionnaire_id).execute()
             )
         except Exception as e:

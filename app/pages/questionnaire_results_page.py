@@ -42,14 +42,15 @@ if __name__ == "__main__":
     st.write(f"## Results for {questionnaire_info.data[0]['title']}")
 
     unique_categories = list({item["category"] for item in questions_info.data})
-
-    score = []
+    
 
     answers = answers_repo.get_answers_by_questionnaire_id(st.session_state["current_questionnaire_id"])
-    
-    total_tam_score = mean_score(unique_categories, answers.data)
 
-    st.write(f"### Total TAM score: {total_tam_score}")
+
+    
+    total_tam_score = mean_score(unique_categories, answers.data, likert_scale_options.data)
+
+    st.write(f"# Total TAM score: {total_tam_score}")
 
     st.divider()
 

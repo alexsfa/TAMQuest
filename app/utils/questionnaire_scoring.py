@@ -31,21 +31,49 @@ def total_score_bar_chart(scores_by_category: dict):
 
     st.pyplot(fig)
 
-def mean_score(categories: list, answers: list):
-    score = []
+def category_answers_bar_chart(answer_counts: dict, category:str):
+    fig, ax = plt.subplots(figsize=(10, 2), dpi=100)
+    ax.bar(answer_counts.keys(), answer_counts.values())
+    ax.set_title(f"Answer Distribution for {category}")
+    ax.set_ylim(0, max(answer_counts.values()) + 1)
+
+    st.pyplot(fig)
+
+def count_category_answers_by_label(df: pd.DataFrame, category:str, likert_scale_options: list):
+    
+    filtered_df = df[df["category"] == category]
+
+    counts = filtered_df["score"].value_counts().reindex(range(1, 6), fill_value=0)
+
+    result = {}
+    for option in likert_scale_options:
+        option_value = option["value"]
+        result[option["label"]] = counts.get(option_value, 0)
+
+    category_answers_bar_chart(result, category)
+
+    return result
+
+
+def mean_score(categories: list, answers: list, likert_scale_options: list):
 
     df = pd.DataFrame([{
         "category": answer["questions"]["category"],
-        "score": 6 - answer["likert_scale_options"]["value"] if answer["questions"]["is_negative"] else answer["likert_scale_options"]["value"]
+        "score": (len(likert_scale_options) + 1) - answer["likert_scale_options"]["value"] if answer["questions"]["is_negative"] else answer["likert_scale_options"]["value"]
     } for answer in answers ])
     scores_by_category = {cat: int(df[df["category"] == cat]["score"].sum())
                         for cat in categories}
 
+    for category in categories:
+        st.write(f"## {category}")
+        result = count_category_answers_by_label(df, category, likert_scale_options)
+
+    st.write("## Categories distribution on TAM score")
     total_score_bar_chart(scores_by_category)
 
     total_score = sum(scores_by_category.values())
     
-    total_tam_score = total_score/(len(answers)*5)
+    total_tam_score = total_score/(len(answers)*len(likert_scale_options))
 
     return total_tam_score
 

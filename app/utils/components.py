@@ -160,7 +160,7 @@ def preview_questionnaire(app_name: str, custom_questions: dict):
     for category, question in custom_questions.items():
         if category in questions.keys():
             for q in question:
-                questions[category].append(q)
+                questions[category].append(q[0])
 
     for category, questions in questions.items():
         st.markdown(f"#### **{category}**" + "\n".join(f"\n{i+1} - {q}" for i, q in enumerate(questions)))
