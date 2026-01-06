@@ -11,7 +11,7 @@ from database.answers import Answers
 
 from utils import supabase_client 
 from utils.menu import menu
-from utils.questionnaire_scoring import mean_score
+from utils.questionnaire_scoring import tam_score, count_category_answers_by_label, construct_scores, pivot_constructs, calc_spearman_correlation
 
 client = supabase_client.get_client()
 
@@ -21,6 +21,8 @@ questions_repo = Questions(client)
 answers_repo = Answers(client)
 likert_scales_repo = Likert_scales(client)
 likert_scale_options_repo = Likert_scale_options(client)
+
+basic_categories = ["Perceived Usefulness", "Perceived Ease of Use", "Attitude", "Behavioral Intention"]
 
 if __name__ == "__main__":
     
@@ -36,23 +38,55 @@ if __name__ == "__main__":
 
     responses_info = responses_repo.get_all_responses_by_questionnaire_id(st.session_state["current_questionnaire_id"])
 
-
     #############################
 
     st.write(f"## Results for {questionnaire_info.data[0]['title']}")
 
-    unique_categories = list({item["category"] for item in questions_info.data})
-    
+    answers = answers_repo.get_submitted_answers_by_questionnaire_id(st.session_state["current_questionnaire_id"])
 
-    answers = answers_repo.get_answers_by_questionnaire_id(st.session_state["current_questionnaire_id"])
+    unique_categories = list({item["questions"]["category"] for item in answers.data})
+
+    for category in basic_categories:
+
+        automated_questions_answers, custom_questions_answers = [], []
+
+        for item in answers.data:
+            if item["questions"]["category"] == category:
+                (custom_questions_answers if item["questions"]["is_custom"] else automated_questions_answers).append(item)
+
+        has_custom = len(custom_questions_answers) > 0
+
+        st.write(f"## {category}")
+        st.write("### Automated questions")
+
+        count_category_answers_by_label(automated_questions_answers, f"Answer distribution for {category} automated questions", likert_scale_options.data)
+
+        question_texts = list({item["questions"]["question_text"] for item in custom_questions_answers})
+        
+        if has_custom:
+            st.write("### Custom questions")
+            for question_text in question_texts:
+                count_category_answers_by_label(custom_questions_answers, f"Answer distribution for '{question_text}' question", likert_scale_options.data)
 
 
-    
-    total_tam_score = mean_score(unique_categories, answers.data, likert_scale_options.data)
-
-    st.write(f"# Total TAM score: {total_tam_score}")
+    st.write(f"# Total TAM score: {tam_score(unique_categories, answers.data, likert_scale_options.data, basic_categories):.3f}")
 
     st.divider()
+
+    responses_category_means = responses_repo.get_all_responses_category_means(st.session_state["current_questionnaire_id"])
+    
+    basic_category_means = pivot_constructs(responses_category_means.data)
+    st.write(basic_category_means)
+
+    st.write(basic_category_means[["AT", "PU", "PEOU"]])
+
+    calc_spearman_correlation(basic_category_means[["AT", "PU", "PEOU"]], basic_category_means[["BI"]])
+
+    
+
+
+
+
 
 
 

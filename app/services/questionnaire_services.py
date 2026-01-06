@@ -156,7 +156,7 @@ def submit_questionnaire( app_name: str, q_details: str, user_id: str, questionn
         position = 1
 
         for category, qs in questions.items():
-            is_negative = True if category == "Computer Anxiety" else False
+            is_negative = True if category in ["Computer Anxiety", "Risk", "Trust"] else False
             for question_text in qs:
                 questions_to_insert.append({
                     "questionnaire_id": questionnaire.data[0]["id"],

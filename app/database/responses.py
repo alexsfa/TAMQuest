@@ -68,6 +68,12 @@ class Responses:
         except Exception as e:
             raise RuntimeError(f"Failed to retrieve the specified draft: {e}")
 
+    def  get_all_responses_category_means(self, questionnaire_id: str):
+        try:
+            return self.supabase_client.rpc("get_response_category_means", {"q_id": questionnaire_id}).execute()
+        except Exception as e:
+            raise RuntimeError(f"Failed to retrieve the specified draft: {e}")
+
     """
     The create_response function inserts a new row in the responses' table (for users)
     """

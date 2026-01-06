@@ -128,13 +128,11 @@ def set_response_ui(questions, likert_scale_options:list, draft_answers: list | 
     else:
         # check which selected_option_value field of draft_answers matches a scale of LIKERT SCALE list
         indexes = [
-            next((item["value"] for item in likert_scale_options.data if item["id"] == ans["selected_option"]), None)
+            next((item["value"] - 1 for item in likert_scale_options.data if item["id"] == ans["selected_option"]), None)
             for ans in draft_answers.data
         ]
-        st.write(indexes)
         for question_index, question in enumerate(questions.data, start=1):
             question_key = f"q{question_index}_answer"
-
             st.markdown(f"</br></br>", unsafe_allow_html=True)
             st.markdown(f"<h5 style='margin-bottom:-10px'>{question_index}. {question['question_text']}</h5>", unsafe_allow_html=True)
             selected_answer = st.radio(
