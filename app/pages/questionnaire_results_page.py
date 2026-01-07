@@ -11,7 +11,8 @@ from database.answers import Answers
 
 from utils import supabase_client 
 from utils.menu import menu
-from utils.questionnaire_scoring import tam_score, count_category_answers_by_label, construct_scores, pivot_constructs, calc_spearman_correlation
+from utils.questionnaire_scoring import (tam_score, count_category_answers_by_label, construct_scores, pivot_constructs, calc_spearman_correlation, 
+plot_spearman_by_response, plot_pvalue_rows)
 
 client = supabase_client.get_client()
 
@@ -44,6 +45,11 @@ if __name__ == "__main__":
 
     answers = answers_repo.get_submitted_answers_by_questionnaire_id(st.session_state["current_questionnaire_id"])
 
+    unique_responses = {item["response_id"] for item in answers.data}
+    count_of_responses = len(unique_responses)
+
+    st.write(f"##### There are {count_of_responses} responses for this questionnaire")
+
     unique_categories = list({item["questions"]["category"] for item in answers.data})
 
     for category in basic_categories:
@@ -73,14 +79,34 @@ if __name__ == "__main__":
 
     st.divider()
 
-    responses_category_means = responses_repo.get_all_responses_category_means(st.session_state["current_questionnaire_id"])
+    unique_responses = {item["response_id"] for item in answers.data}
+    count = len(unique_responses)
+
+    if count_of_responses < 10:
+        st.write("#### There are not enough responses for a valid spearman analysis.")
+    else:
+
+        st.write("### Spearman statistic analysis for TAM's basic constructs")
     
-    basic_category_means = pivot_constructs(responses_category_means.data)
-    st.write(basic_category_means)
+        responses_category_means = responses_repo.get_all_responses_category_means(st.session_state["current_questionnaire_id"])
 
-    st.write(basic_category_means[["AT", "PU", "PEOU"]])
+        basic_category_means = pivot_constructs(responses_category_means.data)
 
-    calc_spearman_correlation(basic_category_means[["AT", "PU", "PEOU"]], basic_category_means[["BI"]])
+        basic_constructs_spearman_results = []
+        basic_constructs_spearman_results.append(calc_spearman_correlation(basic_category_means, "Attitude", "Behavioral Intention"))
+        basic_constructs_spearman_results.append(calc_spearman_correlation(basic_category_means, "Perceived Usefulness", "Attitude"))
+        basic_constructs_spearman_results.append(calc_spearman_correlation(basic_category_means, "Perceived Ease Of Use", "Attitude"))
+
+        final_df = pd.concat(basic_constructs_spearman_results, ignore_index=True)
+
+        plot_spearman_by_response(final_df)
+
+        plot_pvalue_rows(final_df)
+
+        if set(basic_categories) != set(unique_categories):
+            st.write("Do something")
+
+        
 
     
 

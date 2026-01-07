@@ -22,14 +22,21 @@ mapped_categories = {
     "T": "Trust"
 }
 
-def total_score_bar_chart(scores_by_category: pd.DataFrame, basic_categories:list):
-    
+def total_score_bar_chart(scores_by_category: dict, basic_categories:list):
+
     fig, ax = plt.subplots(figsize=(10, 4), dpi=100)
+
     filtered_abbreviations = [abbr for abbr in mapped_categories if mapped_categories.get(abbr) in basic_categories]
     filtered_values = [ scores_by_category[mapped_categories[abbr]] for abbr in filtered_abbreviations ]
-    ax.bar(filtered_abbreviations, filtered_values)
+
+    bars = ax.bar(filtered_abbreviations, filtered_values)
+
+    for bar, score in zip(bars, scores_by_category.values()):
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2, height, f"{score}", ha="center", va="bottom" if height>=0 else "top")
+
     ax.set_title("TAM Score Contribution by Category")
-    ax.set_ylim(0, max(scores_by_category.values()) + 1)
+    ax.set_ylim(0, max(scores_by_category.values()) + 10)
     ax.yaxis.get_major_locator().set_params(integer=True)
 
     st.pyplot(fig)
@@ -47,9 +54,15 @@ def category_answers_bar_chart(answer_counts: pd.DataFrame, title:str, likert_sc
 
 
     fig, ax = plt.subplots(figsize=(10, 2), dpi=100)
-    ax.bar(x_vals, y_vals)
+
+    bars = ax.bar(x_vals, y_vals)
+
+    for bar, answer in zip(bars, answer_counts_dict.values()):
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2, height, f"{answer}", ha="center", va="bottom" if height>=0 else "top")
+
     ax.set_title(title)
-    ax.set_ylim(0, max(y_vals) + 1)
+    ax.set_ylim(0, max(y_vals) + 5)
     ax.yaxis.get_major_locator().set_params(integer=True)
 
     st.pyplot(fig)
@@ -129,9 +142,17 @@ def pivot_constructs(data: dict):
 
     return resulted_df
 
-def calc_spearman_correlation(x_axis: pd.DataFrame, y_axis: pd.DataFrame):
+def calc_spearman_correlation(data: pd.DataFrame, dependent: str, response: str):
+
+    dependent = next((k for k, v in mapped_categories.items() if v == dependent), None)
+    response = next((k for k, v in mapped_categories.items() if v == response), None)
+
+    x_axis = data[dependent]
+    y_axis = data[response]
+
+    st.write(data[dependent])
     
-    x_labels = x_axis.columns.tolist()
+    x_labels = data[dependent].columns.tolist()
 
     r_values = []
     p_values = []
@@ -140,28 +161,74 @@ def calc_spearman_correlation(x_axis: pd.DataFrame, y_axis: pd.DataFrame):
         r, p = spearmanr(x_axis[x], y_axis)
         r_values.append(r)
         p_values.append(p)
-        st.write(x, r, p)
 
     results_df = pd.DataFrame({
-        'Category': x_labels,
+        "Response variable": y_axis.columns.tolist(),
+        'Dependent variable': x_labels,
         'Spearman r': r_values,
         'p-value': p_values
     })
 
-    plt.figure(figsize=(10, 3))
-    sns.barplot(x='Category', y='Spearman r', data=results_df, palette='viridis')
-    plt.title('Spearman Correlation Coefficients')
-    plt.ylabel('Spearman r')
-    plt.xticks(rotation=45)
-    st.pyplot(plt)
+    return results_df
+
+def plot_spearman_by_response(df):
+ 
+    df["label"] = df["Dependent variable"] + " → " + df["Response variable"]
+
+    colors = []
+    for r in df["Spearman r"]:
+        if r < -0.5:
+            colors.append("red")
+        elif -0.5 <= r < 0:
+            colors.append("pink")
+        elif 0 <= r < 0.5:
+            colors.append("lightgreen")
+        else:
+            colors.append("green")
+
+    fig, ax = plt.subplots(figsize=(8, 3))
+    bars = ax.bar(df["label"], df["Spearman r"], color=colors)
+
+    ax.axhline(0, color="black", linewidth=0.8)
+
+    ax.set_ylim(-1.1, 1.1)
+
+    for bar, r in zip(bars, df["Spearman r"]):
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2, height, f"{r:.2f}", ha="center", va="bottom" if height>=0 else "top")
+
+    plt.ylabel("Spearman r")
+    plt.title("Spearman correlations between predictors and responses")
+    st.pyplot(fig)
+
+def plot_pvalue_rows(df, title="Spearman p-value for each relationship"):
+
+    df["label"] = df["Dependent variable"] + " → " + df["Response variable"]
+
+    colors = ["green" if p < 0.05 else "red" for p in df["p-value"]]
+
+    fig, ax = plt.subplots(figsize=(8, 3))
+    bars = ax.bar(df["label"], df["p-value"], color=colors)
+
+    ax.axhline(0, color="black", linewidth=0.8)
     
-    # Προαιρετικά: Δημιουργία bar chart για να οπτικοποιήσεις τα p-values
-    plt.figure(figsize=(10, 3))
-    sns.barplot(x='Category', y='p-value', data=results_df, palette='coolwarm')
-    plt.title('p-values for Spearman Correlation')
-    plt.ylabel('p-value')
-    plt.xticks(rotation=45)
-    st.pyplot(plt)
+    max_p_decimal_part = str(max(df["p-value"])).split(".")[1] if "." in str(max(df["p-value"])) else ""
+
+    if max_p_decimal_part.startswith("00"):
+        padding = 0.001
+    else:
+        padding = 0.1  
+
+    ax.set_ylim(0, max(df["p-value"]) + padding)
+
+    for bar, p in zip(bars, df["p-value"]):
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2, height, f"{p:.4f}", ha="center", va="bottom" if height>=0 else "top")
+
+    plt.ylabel("p-value")
+    plt.title("Spearman p-values for predictors and responses")
+    st.pyplot(fig)
+
 
 
     

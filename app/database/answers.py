@@ -17,7 +17,7 @@ class Answers:
     def get_submitted_answers_by_questionnaire_id(self, questionnaire_id: str):
         try:
             return (
-                self.supabase_client.table("answers").select("responses!inner(is_submitted), questions!inner(questionnaire_id, question_text, category, is_custom, is_negative), likert_scale_options!inner(value, label)")
+                self.supabase_client.table("answers").select("response_id, responses!inner(is_submitted), questions!inner(questionnaire_id, question_text, category, is_custom, is_negative), likert_scale_options!inner(value, label)")
                 .eq("questions.questionnaire_id", questionnaire_id).eq("responses.is_submitted", True).execute()
             )
         except Exception as e:

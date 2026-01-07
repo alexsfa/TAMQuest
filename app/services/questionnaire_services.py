@@ -48,7 +48,7 @@ def retrieve_questionnaire(questionnaire_id: str, questionnaires_repo, questions
             except RuntimeError as e:
                 logger.error(f"Database error: {e}")
 
-    return [questionnaire_info, questions_info, likert_scale_info, likert_scale_options ]
+    return [questionnaire_info, questions_info, likert_scale_info, likert_scale_options]
 
 
 def retrieve_questionnaire_by_response(response_id: str, responses_repo, questions_repo, logger):
