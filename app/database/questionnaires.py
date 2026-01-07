@@ -4,10 +4,20 @@ class Questionnaires:
         self.supabase_client = client
 
     """
-    The get_all_questionnaires function returns all the questionnaires and fields from the admin's responses 
+    The get_all_questionnaires function returns all the questionnaires from the admin's responses 
     on those questionnaires (for admins)
     """
-    def get_all_questionnaires(self, user_id: str):
+    def get_all_questionnaires(self):
+        try:
+            return self.supabase_client.table("questionnaires").select("*").order("created_at", desc=True).execute()
+        except Exception as e:
+            raise RuntimeError(f"Failed to retrieve questionnaires: {e}")
+
+    """
+    The get_all_questionnaires function returns all the questionnaires from the admin's responses 
+    on those questionnaires (for admins)
+    """
+    def get_all_questionnaires_without_admin_response(self, user_id: str):
         try:
             return self.supabase_client.table("questionnaires").select(
                     f"""

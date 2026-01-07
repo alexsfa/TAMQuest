@@ -172,7 +172,7 @@ if __name__ == "__main__":
 
     qs = None
     try:
-        qs = questionnaires_repo.get_all_questionnaires(st.session_state["user_id"])
+        qs = questionnaires_repo.get_all_questionnaires_without_admin_response(st.session_state["user_id"])
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
 

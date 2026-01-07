@@ -75,23 +75,46 @@ if __name__ == "__main__":
     # Admin's main page shows all the responses that have been submitted    
     if st.session_state["role"] == 'admin':
         st.write("## User's responses")
-
-        responses = None
+        questionnaires = None
         try:
-            responses = responses_repo.get_all_responses()
+            questionnaires = questionnaires_repo.get_all_questionnaires()
         except RuntimeError as e:
             logger.error(f"Database error: {e}")
 
-        if responses is None:
-            st.error("Error during the responses retrieval")
-        elif len(responses.data) == 0:
-            st.write("There are not any responses for the questionnaires")
+        available_filter_actions = ["All"]
+        available_questionnaires = list({item["title"] for item in questionnaires.data})
+        for q_title in available_questionnaires:
+            available_filter_actions.append(q_title)
+
+        filter_title = st.selectbox("Filter by questionnaire", available_filter_actions)
+
+        if filter_title is "All":
+
+            try:
+                responses = responses_repo.get_all_responses()
+            except RuntimeError as e:
+                logger.error(f"Database error: {e}")
+
+            if responses is None:
+                st.error("Error during the responses retrieval")
+            elif len(responses.data) == 0:
+                st.write("There are not any responses for the questionnaires")
+            else:
+                response_list = responses.data
+                for response in response_list:
+                    create_responses_management_ui(response, "View",  redirect_to_view_page)
         else:
-            response_list = responses.data
+            try:
+                responses_by_q_title = responses_repo.get_responses_by_questionnaire_title(filter_title)
+            except RuntimeError as e:
+                logger.error(f"Database error: {e}")
 
-            for response in response_list:
-                create_responses_management_ui(response, "View",  redirect_to_view_page)
-
+            if responses_by_q_title is None:
+                st.error("Error during the responses retrieval")
+            else:
+                response_list = responses_by_q_title.data
+                for response in response_list:
+                    create_responses_management_ui(response, "View",  redirect_to_view_page)
     else:
         
         qs = None

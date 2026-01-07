@@ -31,12 +31,14 @@ def total_score_bar_chart(scores_by_category: dict, basic_categories:list):
 
     bars = ax.bar(filtered_abbreviations, filtered_values)
 
-    for bar, score in zip(bars, scores_by_category.values()):
+    non_zero_scores = [score for score in scores_by_category.values() if score != 0]
+
+    for bar, score in zip(bars, filtered_values):
         height = bar.get_height()
         ax.text(bar.get_x() + bar.get_width()/2, height, f"{score}", ha="center", va="bottom" if height>=0 else "top")
 
     ax.set_title("TAM Score Contribution by Category")
-    ax.set_ylim(0, max(scores_by_category.values()) + 10)
+    ax.set_ylim(0, max(scores_by_category.values()) + 50)
     ax.yaxis.get_major_locator().set_params(integer=True)
 
     st.pyplot(fig)
@@ -57,9 +59,9 @@ def category_answers_bar_chart(answer_counts: pd.DataFrame, title:str, likert_sc
 
     bars = ax.bar(x_vals, y_vals)
 
-    for bar, answer in zip(bars, answer_counts_dict.values()):
+    for bar, y in zip(bars, y_vals):
         height = bar.get_height()
-        ax.text(bar.get_x() + bar.get_width()/2, height, f"{answer}", ha="center", va="bottom" if height>=0 else "top")
+        ax.text( bar.get_x() + bar.get_width()/2, height + 0.1, f"{int(y)}", ha="center", va="bottom")
 
     ax.set_title(title)
     ax.set_ylim(0, max(y_vals) + 5)
@@ -147,12 +149,10 @@ def calc_spearman_correlation(data: pd.DataFrame, dependent: str, response: str)
     dependent = next((k for k, v in mapped_categories.items() if v == dependent), None)
     response = next((k for k, v in mapped_categories.items() if v == response), None)
 
-    x_axis = data[dependent]
-    y_axis = data[response]
-
-    st.write(data[dependent])
+    x_axis = data[dependent].to_frame()
+    y_axis = data[response].to_frame()
     
-    x_labels = data[dependent].columns.tolist()
+    x_labels = x_axis.columns.tolist()
 
     r_values = []
     p_values = []
@@ -171,7 +171,7 @@ def calc_spearman_correlation(data: pd.DataFrame, dependent: str, response: str)
 
     return results_df
 
-def plot_spearman_by_response(df):
+def plot_spearman_by_response(df: pd.DataFrame):
  
     df["label"] = df["Dependent variable"] + " → " + df["Response variable"]
 

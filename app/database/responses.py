@@ -58,7 +58,7 @@ class Responses:
         try:
             query = (
                 self.supabase_client.table("responses").select("id").eq("user_id", user_id)
-                .eq("questionnaire_id", questionnaire_id)
+                .eq("questionnaire_id", questionnaire_id).execute()
             )
 
             if is_submitted is None:
@@ -67,6 +67,15 @@ class Responses:
             return query.execute()
         except Exception as e:
             raise RuntimeError(f"Failed to retrieve the specified draft: {e}")
+
+    def get_responses_by_questionnaire_title(self, questionnaire_title: str):
+        try:
+            return (
+                self.supabase_client.table("responses").select("questionnaires!inner(*), profiles(full_name), id, submitted_at, is_submitted")
+                .eq("questionnaires.title", questionnaire_title).eq("is_submitted", True).order("submitted_at", desc=True).execute()
+            )
+        except Exception as e:
+            raise RuntimeError(f"Failed to retrieve responses: {e}")
 
     def  get_all_responses_category_means(self, questionnaire_id: str):
         try:
