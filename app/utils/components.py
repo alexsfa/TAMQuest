@@ -201,6 +201,7 @@ def create_responses_management_ui(response: dict, redirection_button: str, call
             delete_response = None
             try:
                 delete_response = responses_repo.delete_response_by_id(response['id'])
+                st.rerun()
             except RuntimeError as e:
                 logger.error(f"Database error: {e}")
 
@@ -208,6 +209,7 @@ def create_responses_management_ui(response: dict, redirection_button: str, call
                 st.error(f"Error during the response's deletion")
             else:
                 st.rerun()
+
 
 def likert_scale_customization_ui():
     ls_customization_container = st.container(border=True)

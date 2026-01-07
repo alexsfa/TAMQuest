@@ -243,6 +243,7 @@ if __name__ == "__main__":
     st.write("## Profiles' list")
 
     profiles = None
+
     try:
         profiles = profiles_repo.get_all_profiles(st.session_state["user_id"])
     except RuntimeError as e:
@@ -272,5 +273,5 @@ if __name__ == "__main__":
                         st.error("Error during the profile's deletion")
                 st.markdown("</div>", unsafe_allow_html=True)
 
-        message_box = st.empty()
+            message_box = st.empty()
 

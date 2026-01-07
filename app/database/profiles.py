@@ -21,6 +21,12 @@ class Profiles:
         except Exception as e:
             raise RuntimeError(f"Failed to retrieve profile: {e}")
 
+    def get_profile_by_user_name(self, username: str):
+        try:
+            return self.supabase_client.table("profiles").select("*").eq("name", username).execute()
+        except Exception as e:
+            raise RuntimeError(f"Failed to retrieve profile: {e}")
+
     """
     The create_profile function inserts a new row on the database's profiles table (for users)
     """

@@ -58,7 +58,7 @@ class Responses:
         try:
             query = (
                 self.supabase_client.table("responses").select("id").eq("user_id", user_id)
-                .eq("questionnaire_id", questionnaire_id).execute()
+                .eq("questionnaire_id", questionnaire_id)
             )
 
             if is_submitted is None:
