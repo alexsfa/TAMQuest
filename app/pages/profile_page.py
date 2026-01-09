@@ -62,23 +62,6 @@ if __name__ == "__main__":
 
     with st.container():
 
-        if st.session_state.create_profile:
-            profile_inputs = create_profile_form("insert")
-
-            if st.button("Create"):
-                profile_insert = None
-                try:
-                    profile_insert = profiles_repo.create_profile(st.session_state["user_id"], profile_inputs[0], profile_inputs[1], profile_inputs[2], profile_inputs[3])
-                except RuntimeError as e:
-                    logger.error(f"Database error: {e}")
-
-                if profile_insert is None:
-                    raise Exception("Failed to create profile.")
-                else:
-                    st.session_state["profile_id"] = profile_insert.data[0]["id"]
-                    st.session_state.create_profile = False
-                    st.rerun()
-
         if st.session_state.update_profile:
             profile_inputs = create_profile_form("update")
 

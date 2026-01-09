@@ -66,9 +66,9 @@ if __name__ == "__main__":
         st.error("Error during your profile retrieval")
         st.stop()
     elif len(user_profile.data) == 0:
-        st.session_state["profile_id"] = None
+        st.switch_page("pages/create_profile_page.py")
     else:
-        st.session_state["profile_id"] = user_profile.data[0]["id"]
+        pass
 
     st.title("Welcome to TAMQuest")
 
@@ -142,10 +142,7 @@ if __name__ == "__main__":
                 with col2:
                     respond_key = f"respond_{item['id']}"
                     if st.button("Respond", key=respond_key):
-                        if st.session_state["profile_id"] is None:
-                            message_box.error("You have to create a profile before submitting a response")
-                        else:
-                            redirect_to_respond_page(item['id'])
+                        redirect_to_respond_page(item['id'])
 
 
                 
