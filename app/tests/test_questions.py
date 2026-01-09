@@ -25,7 +25,7 @@ def test_get_questions_by_questionnaire_id(mock_supabase_client):
     result = questions.get_questions_by_questionnaire_id("q_123")
 
     mock_supabase_client.table.assert_called_once_with("questions")
-    mock_supabase_client.table().select.assert_called_once_with("id, question_text")
+    mock_supabase_client.table().select.assert_called_once_with("id, question_text, category")
     mock_supabase_client.table().select().eq.assert_any_call("questionnaire_id", "q_123")
     mock_supabase_client.table().select().execute.assert_called_once()
 

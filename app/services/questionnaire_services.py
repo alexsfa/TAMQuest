@@ -18,66 +18,68 @@ likert_scales_repo = Likert_scales(client)
 likert_scale_options_repo = Likert_scale_options(client)
 
 
-
-
-def retrieve_questionnaire(questionnaire_id: str, questionnaires_repo, questions_repo, logger):
+def retrieve_questionnaire(questionnaire_id: str, questionnaires_repo, questions_repo, likert_scales_repo, likert_scale_options_repo, logger):
+    questionnaire_info = None
+    questions_info = None
+    likert_scale_info = None
+    likert_scale_options = None
 
     questionnaire_info = None
     try:
         questionnaire_info = questionnaires_repo.get_questionnaire_by_id(questionnaire_id)
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
+        return [questionnaire_info, questions_info, likert_scale_info, likert_scale_options]
 
-    if questionnaire_info is not None:
-        questions_info = None
-        try:
-            questions_info = questions_repo.get_questions_by_questionnaire_id(questionnaire_id)
-        except RuntimeError as e:
-            logger.error(f"Database error: {e}")
+    try:
+        questions_info = questions_repo.get_questions_by_questionnaire_id(questionnaire_id)
+    except RuntimeError as e:
+        logger.error(f"Database error: {e}")
 
-        likert_scale_info = None
-        try:
-            likert_scale_info = likert_scales_repo.get_likert_scale_by_questionnaire_id(questionnaire_id)
-        except RuntimeError as e:
-            logger.error(f"Database error: {e}")
+    try:
+        likert_scale_info = likert_scales_repo.get_likert_scale_by_questionnaire_id(questionnaire_id)
+    except RuntimeError as e:
+        logger.error(f"Database error: {e}")
 
-        if likert_scale_info is not None:
-            likert_scale_options = None
-            try:
-                likert_scale_options = likert_scale_options_repo.get_options_by_likert_scale_id(likert_scale_info.data[0]["id"])
-            except RuntimeError as e:
-                logger.error(f"Database error: {e}")
+    try:
+        likert_scale_options = likert_scale_options_repo.get_options_by_likert_scale_id(likert_scale_info.data[0]["id"])
+    except RuntimeError as e:
+        logger.error(f"Database error: {e}")
 
     return [questionnaire_info, questions_info, likert_scale_info, likert_scale_options]
 
-
-def retrieve_questionnaire_by_response(response_id: str, responses_repo, questions_repo, logger):
-
+"""
+The retrieve_questionnaire_by_response functions gets the response by its id, retrieving its corresponding questionnaire.
+By response's corresponding questionnaire id, the function retrieves the questionnaire's questions and likert scale
+"""
+def retrieve_questionnaire_by_response(response_id: str, responses_repo, questions_repo, likert_scales_repo, likert_scale_options_repo, logger):
     response_info = None
+    questions_info = None
+    likert_scale_info = None
+    likert_scale_options = None
+
     try:
         response_info = responses_repo.get_response_by_id(response_id)
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
+        return [response_info, questions_info, likert_scale_info, likert_scale_options]
 
-    questions_info = None
     try:
-        if response_info is not None:
-            questions_info = questions_repo.get_questions_by_questionnaire_id(response_info.data[0]["questionnaires"]["id"])
+        questions_info = questions_repo.get_questions_by_questionnaire_id(response_info.data[0]["questionnaires"]["id"])
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
 
-    likert_scale_info = None
+
     try:
         likert_scale_info = likert_scales_repo.get_likert_scale_by_questionnaire_id(response_info.data[0]["questionnaires"]["id"])
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
 
-    if likert_scale_info is not None:
-        likert_scale_options = None
-        try:
-            likert_scale_options = likert_scale_options_repo.get_options_by_likert_scale_id(likert_scale_info.data[0]["id"])
-        except RuntimeError as e:
-            logger.error(f"Database error: {e}")
+
+    try:
+        likert_scale_options = likert_scale_options_repo.get_options_by_likert_scale_id(likert_scale_info.data[0]["id"])
+    except RuntimeError as e:
+        logger.error(f"Database error: {e}")
 
     return [response_info, questions_info, likert_scale_info, likert_scale_options]
 

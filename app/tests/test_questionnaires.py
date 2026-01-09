@@ -25,12 +25,10 @@ def mock_supabase_client():
 def test_get_all_questionnaires(mock_supabase_client):
     questionnaires = Questionnaires(mock_supabase_client)
 
-    result = questionnaires.get_all_questionnaires("user-123")
+    result = questionnaires.get_all_questionnaires()
 
     mock_supabase_client.table.assert_called_once_with("questionnaires")
     mock_supabase_client.table().select.assert_called_once()
-    mock_supabase_client.table().select().eq.assert_any_call("responses.user_id", "user-123")
-    mock_supabase_client.table().select().eq.assert_any_call("responses.is_submitted", True)
     mock_supabase_client.table().select().order.assert_called_once_with("created_at", desc=True)
     mock_supabase_client.table().select().execute.assert_called_once()
 
@@ -104,7 +102,7 @@ def test_get_all_questionaires_raises_runtime_error(mock_supabase_client):
     questionnaires = Questionnaires(mock_supabase_client)
 
     with pytest.raises(RuntimeError, match="Failed to retrieve questionnaires"):
-        questionnaires.get_all_questionnaires("user-123")
+        questionnaires.get_all_questionnaires()
 
 
 def test_get_questionnaire_by_id_raises_runtime_error(mock_supabase_client):
