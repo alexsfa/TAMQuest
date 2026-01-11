@@ -25,14 +25,19 @@ def mock_supabase_client():
 def test_get_all_questionnaires(mock_supabase_client):
     questionnaires = Questionnaires(mock_supabase_client)
 
+    mock_supabase_client.table.return_value \
+        .select.return_value \
+        .order.return_value \
+        .execute.return_value = {"data": "mocked_result"}
+
     result = questionnaires.get_all_questionnaires()
 
     mock_supabase_client.table.assert_called_once_with("questionnaires")
     mock_supabase_client.table().select.assert_called_once()
     mock_supabase_client.table().select().order.assert_called_once_with("created_at", desc=True)
-    mock_supabase_client.table().select().execute.assert_called_once()
+    mock_supabase_client.table().select().order().execute.assert_called_once()
 
-    assert result == {"data": "mocked_result"}
+    assert result["data"] == "mocked_result"
 
 
 def test_get_questionnaire_by_id(mock_supabase_client):
@@ -75,7 +80,7 @@ def test_create_questionnaires(mock_supabase_client):
 
     mock_supabase_client.table.assert_called_once_with("questionnaires")
     mock_supabase_client.table().insert.assert_called_once_with({
-        "title": "TAM Questionnaire for TestApp",
+        "title": "TestApp TAM Questionnaire",
         "details": "Details",
         "created_by": "admin-123"
     })

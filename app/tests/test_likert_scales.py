@@ -15,42 +15,52 @@ def mock_supabase_client():
     return client
 
 def test_get_likert_scale_by_questionnaire_id(mock_supabase_client):
-    likert_scales = Likert_scales(mock_supabase_client)
+    likert_scales_repo = Likert_scales(mock_supabase_client)
 
-    result = likert_scales.get_likert_scale_by_questionnaire_id("q-123")
+    mock_supabase_client.table.return_value \
+        .select.return_value \
+        .eq.return_value \
+        .execute.return_value = {"data": "mocked_result"}
+
+    result = likert_scales_repo.get_likert_scale_by_questionnaire_id("q_123")
 
     mock_supabase_client.table.assert_called_once_with("likert_scales")
-    mock_supabase_client.table().select.assert_called_once_with("questionnaire_id")
+    mock_supabase_client.table().select.assert_called_once_with("id")
     mock_supabase_client.table().select().eq.assert_any_call("questionnaire_id", "q_123")
-    mock_supabase_client.table().select().execute.assert_called_once()
+    mock_supabase_client.table().select().eq().execute.assert_called_once()
 
-    assert result == {"data": "mocked_result"}
+    assert result["data"] == "mocked_result"
 
 def test_create_likert_scale(mock_supabase_client):
-    likert_scales = Likert_scales(mock_supabase_client)
+    likert_scales_repo = Likert_scales(mock_supabase_client)
 
-    result = likert_scales.create_likert_scale(
+    mock_supabase_client.table.return_value \
+        .insert.return_value \
+        .execute.return_value = {"data": "mocked_result"}
+
+    result = likert_scales_repo.create_likert_scale(
         questionnaire_id = "q_123"
     )
 
     mock_supabase_client.table.assert_called_once_with("likert_scales")
     mock_supabase_client.table().insert.assert_called_once_with({
-        "questionnaire_id": "q-123"
+        "questionnaire_id": "q_123"
     })
     mock_supabase_client.table().insert().execute.assert_called_once()
 
-    assert result == {"data": "mocked_result"}
+    assert isinstance(result, dict)
+    assert result["data"] == "mocked_result"
 
 def test_get_likert_scale_by_questionnaire_id_raises_runtime_error(mock_supabase_client):
     mock_supabase_client.table.side_effect = Exception("DB down")
-    likert_scales = Likert_scales(mock_supabase_client)
+    likert_scales_repo = Likert_scales(mock_supabase_client)
 
     with pytest.raises(RuntimeError, match="Failed to retrieve the questionnaire's likert scale"):
-        likert_scales.get_likert_scale_by_questionnaire_id("user-123")
+        likert_scales_repo.get_likert_scale_by_questionnaire_id("user-123")
 
 def test_create_likert_scale_raises_runtime_error(mock_supabase_client):
     mock_supabase_client.table.side_effect = Exception("DB down") 
-    likert_scales = Likert_scales(mock_supabase_client)
+    likert_scales_repo = Likert_scales(mock_supabase_client)
 
-    with pytest.raises(RuntimeError, match="Failed to create questionnaire"):
-        likert_scales.create_likert_scale("q_123")
+    with pytest.raises(RuntimeError, match="Failed to create the questionnaire's likert scale"):
+        likert_scales_repo.create_likert_scale("l_s_123")

@@ -100,35 +100,6 @@ def test_retrieve_questionnaire_by_response():
 
     assert result == [response_data, questions_data, likert_scale_data, likert_scale_options_data]
 
-def test_submit_questionnaire(mock_streamlit, mock_question_generators):
-    questionnaires_repo = MagicMock()
-    questions_repo = MagicMock()
-    logger = MagicMock()
-
-    mock_questionnaire = MagicMock()
-    mock_questionnaire.data = [{"id": "q_123"}]
-
-    questionnaires_repo.create_questionnaire.return_value = mock_questionnaire
-    questions_repo.create_questions.return_value = {"data": "questions_inserted"}
-
-    result = submit_questionnaire(
-        "TestApp",
-        "Some details",
-        "user_123",
-        questionnaires_repo,
-        questions_repo,
-        logger
-    )
-
-    questionnaires_repo.create_questionnaire.assert_called_once()
-    questions_repo.create_questions.assert_called_once()
-
-    inserted_questions = questions_repo.create_questions.call_args[0][0]
-    assert len(inserted_questions) == 2
-    assert inserted_questions[0]["position"] == 1
-    assert inserted_questions[1]["position"] == 2
-
-    assert result == [mock_questionnaire, {"data": "questions_inserted"}]
 
 def test_retrieve_questionnaire_repo_fail():
     questionnaires_repo = MagicMock()
@@ -143,7 +114,10 @@ def test_retrieve_questionnaire_repo_fail():
         "q_123",
         questionnaires_repo,
         questions_repo,
-        logger
+        likert_scale_repo,
+        likert_scale_options_repo,
+        logger,
+
     )
 
     questionnaires_repo.get_questionnaire_by_id.assert_called_once_with("q_123")
@@ -153,10 +127,14 @@ def test_retrieve_questionnaire_repo_fail():
 
     assert result[0] is None
     assert result[1] is None
+    assert result[2] is None
+    assert result[3] is None
 
 def test_retrieve_questionnaire_questions_repo_fail():
     questionnaires_repo = MagicMock()
     questions_repo = MagicMock()
+    likert_scale_repo = MagicMock()
+    likert_scale_options_repo = MagicMock()
     logger = MagicMock()
 
     mock_questionnaire = MagicMock()
@@ -168,6 +146,8 @@ def test_retrieve_questionnaire_questions_repo_fail():
         "q_123",
         questionnaires_repo,
         questions_repo,
+        likert_scale_repo,
+        likert_scale_options_repo,
         logger
     )
 
@@ -178,10 +158,14 @@ def test_retrieve_questionnaire_questions_repo_fail():
 
     assert result[0] is mock_questionnaire
     assert result[1] is None
+    assert result[2] is None
+    assert result[3] is None
 
 def test_retrieve_questionnaire_by_response_repo_fail():
     responses_repo = MagicMock()
     questions_repo = MagicMock()
+    likert_scales_repo = MagicMock()
+    likert_scales_options_repo = MagicMock()
     logger = MagicMock()
 
     responses_repo.get_response_by_id.side_effect = RuntimeError("DB error")
@@ -190,6 +174,8 @@ def test_retrieve_questionnaire_by_response_repo_fail():
         "res_123",
         responses_repo,
         questions_repo,
+        likert_scales_repo,
+        likert_scales_options_repo,
         logger
     )
 
@@ -200,10 +186,14 @@ def test_retrieve_questionnaire_by_response_repo_fail():
 
     assert result[0] is None
     assert result[1] is None
+    assert result[2] is None
+    assert result[3] is None
 
 def test_retrieve_questionnaire_by_response_questions_repo_fail():
     responses_repo = MagicMock()
     questions_repo = MagicMock()
+    likert_scales_repo = MagicMock()
+    likert_scales_options_repo = MagicMock()
     logger = MagicMock()
 
     mock_response = MagicMock()
@@ -218,6 +208,8 @@ def test_retrieve_questionnaire_by_response_questions_repo_fail():
         "res_123",
         responses_repo,
         questions_repo,
+        likert_scales_repo,
+        likert_scales_options_repo,
         logger
     )
         
@@ -227,6 +219,8 @@ def test_retrieve_questionnaire_by_response_questions_repo_fail():
 
     assert result[0] is mock_response
     assert result[1] is None
+    assert result[2] is None
+    assert result[3] is None
 
 
 

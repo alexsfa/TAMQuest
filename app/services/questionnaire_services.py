@@ -35,16 +35,19 @@ def retrieve_questionnaire(questionnaire_id: str, questionnaires_repo, questions
         questions_info = questions_repo.get_questions_by_questionnaire_id(questionnaire_id)
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
+        return [questionnaire_info, questions_info, likert_scale_info, likert_scale_options]
 
     try:
         likert_scale_info = likert_scales_repo.get_likert_scale_by_questionnaire_id(questionnaire_id)
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
+        return [questionnaire_info, questions_info, likert_scale_info, likert_scale_options]
 
     try:
         likert_scale_options = likert_scale_options_repo.get_options_by_likert_scale_id(likert_scale_info.data[0]["id"])
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
+        return [questionnaire_info, questions_info, likert_scale_info, likert_scale_options]
 
     return [questionnaire_info, questions_info, likert_scale_info, likert_scale_options]
 
@@ -68,18 +71,21 @@ def retrieve_questionnaire_by_response(response_id: str, responses_repo, questio
         questions_info = questions_repo.get_questions_by_questionnaire_id(response_info.data[0]["questionnaires"]["id"])
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
+        return [response_info, questions_info, likert_scale_info, likert_scale_options]
 
 
     try:
         likert_scale_info = likert_scales_repo.get_likert_scale_by_questionnaire_id(response_info.data[0]["questionnaires"]["id"])
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
+        return [response_info, questions_info, likert_scale_info, likert_scale_options]
 
 
     try:
         likert_scale_options = likert_scale_options_repo.get_options_by_likert_scale_id(likert_scale_info.data[0]["id"])
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
+        return [response_info, questions_info, likert_scale_info, likert_scale_options]
 
     return [response_info, questions_info, likert_scale_info, likert_scale_options]
 
@@ -113,7 +119,7 @@ def submit_questionnaire_likert_scale(questionnaire_id:str, likert_scale_options
     return q_likert_scale_info
 
 """
-The collect_likert_scale_options function returns a list with the likert scale level values
+The collect_likert_scale_options function returns a list with the likert scale level labels
 that the admin has submitted.
 """
 def collect_likert_scale_options():
@@ -135,6 +141,9 @@ def submit_questionnaire( app_name: str, q_details: str, user_id: str, questionn
         questionnaire_details = q_details.strip()
     else:
         questionnaire_details = None
+
+    if custom_questions is None:
+        custom_questions = {}
 
     questionnaire_likert_scale_options = collect_likert_scale_options()
     if not all(questionnaire_likert_scale_options):

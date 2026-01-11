@@ -26,7 +26,7 @@ def test_get_answers_by_response_id(mock_supabase_client):
     result = answers.get_answers_by_response_id("res_123")
 
     mock_supabase_client.table.assert_called_once_with("answers")
-    mock_supabase_client.table().select.assert_called_once_with("*, questions(question_text, position)")
+    mock_supabase_client.table().select.assert_called_once_with("*, questions(question_text, position), likert_scale_options(label, value)")
     mock_supabase_client.table().select().eq.assert_any_call("response_id", "res_123")
     mock_supabase_client.table().select().order.assert_any_call("questions(position)")
     mock_supabase_client.table().select().execute.assert_called_once()
@@ -36,9 +36,9 @@ def test_get_answers_by_response_id(mock_supabase_client):
 def test_create_answers(mock_supabase_client):
     answers = Answers(mock_supabase_client)
     answers_list = [
-        {"response_id": "res_123","question_id": "q_1", "selected_option_value": "Agree"},
-        {"response_id": "res_123","question_id": "q_2", "selected_option_value": "Agree"},
-        {"response_id": "res_123","question_id": "q_3", "selected_option_value": "Agree"},
+        {"response_id": "res_123","question_id": "q_1", "question_text": "question_1", "label": "Disagree", "value": 1 },
+        {"response_id": "res_123","question_id": "q_2", "question_text": "question_2", "label": "Neutral", "value": 2 },
+        {"response_id": "res_123","question_id": "q_3", "question_text": "question_3", "label": "Agree", "value": 3 },
     ]
 
     result = answers.create_answers(answers_list)

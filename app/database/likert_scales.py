@@ -18,4 +18,4 @@ class Likert_scales:
                 }).execute()
             )
         except Exception as e:
-            raise RuntimeError(f"Failed to insert the questionnaire's likert scale: {e}")
+            raise RuntimeError(f"Failed to create the questionnaire's likert scale: {e}")
