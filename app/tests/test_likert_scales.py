@@ -12,6 +12,10 @@ def mock_supabase_client():
     table.select.return_value = query
     table.insert.return_value = query
 
+    query.eq.return_value = query
+
+    query.execute.return_value = {"data": "mocked_result"}
+
     return client
 
 def test_get_likert_scale_by_questionnaire_id(mock_supabase_client):
@@ -33,10 +37,6 @@ def test_get_likert_scale_by_questionnaire_id(mock_supabase_client):
 
 def test_create_likert_scale(mock_supabase_client):
     likert_scales_repo = Likert_scales(mock_supabase_client)
-
-    mock_supabase_client.table.return_value \
-        .insert.return_value \
-        .execute.return_value = {"data": "mocked_result"}
 
     result = likert_scales_repo.create_likert_scale(
         questionnaire_id = "q_123"

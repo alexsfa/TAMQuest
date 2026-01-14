@@ -27,11 +27,11 @@ def test_get_all_profiles(mock_supabase_client):
     result = profiles.get_all_profiles("user-123")
 
     mock_supabase_client.table.assert_called_once_with("profiles")
-    mock_supabase_client.table().select.assert_called_once()
-    mock_supabase_client.table().select().neq.assert_any_call("id", "user-123")
-    mock_supabase_client.table().select().execute.assert_called_once()
+    mock_supabase_client.table().select.assert_called_once_with("*")
+    mock_supabase_client.table().select().neq.assert_called_once_with("id", "user-123")
+    mock_supabase_client.table().select().neq().execute.assert_called_once()
 
-    assert result == {"data": "mocked_result"}
+    assert result["data"] == "mocked_result"
 
 def test_get_profile_by_id(mock_supabase_client):
     profiles = Profiles(mock_supabase_client)
@@ -40,15 +40,15 @@ def test_get_profile_by_id(mock_supabase_client):
 
     mock_supabase_client.table.assert_called_once_with("profiles")
     mock_supabase_client.table().select.assert_called_once()
-    mock_supabase_client.table().select().eq.assert_any_call("id", "user-123")
-    mock_supabase_client.table().select().execute.assert_called_once()
+    mock_supabase_client.table().select().eq.assert_called_once_with("id", "user-123")
+    mock_supabase_client.table().select().eq().execute.assert_called_once()
 
-    assert result == {"data": "mocked_result"}
+    assert result["data"] == "mocked_result"
 
 def test_create_profile(mock_supabase_client):
     profiles = Profiles(mock_supabase_client)
 
-    result = profiles.create_profile("user-123", "test_user", "1900-01-01", "test_city", "test_country")
+    result = profiles.create_profile("user-123", "test_user", "1900-01-01", "test_city","test_country")
     
     mock_supabase_client.table.assert_called_once_with("profiles")
     mock_supabase_client.table().insert.assert_called_once_with({
@@ -60,7 +60,7 @@ def test_create_profile(mock_supabase_client):
     })
     mock_supabase_client.table().insert().execute.assert_called_once()
 
-    assert result == {"data": "mocked_result"}
+    assert result["data"] == "mocked_result"
 
 def test_update_profile_by_id(mock_supabase_client):
     profiles = Profiles(mock_supabase_client)
@@ -77,9 +77,9 @@ def test_update_profile_by_id(mock_supabase_client):
         "country": "updated_test_country"    # fallback to old
     })
     mock_supabase_client.table().update().eq.assert_called_once_with("id", "user-123")
-    mock_supabase_client.table().update().execute.assert_called_once()
+    mock_supabase_client.table().update().eq().execute.assert_called_once()
 
-    assert result == {"data": "mocked_result"}
+    assert result["data"] == "mocked_result"
 
 def test_delete_profile_by_id(mock_supabase_client):
     profiles = Profiles(mock_supabase_client)
@@ -89,9 +89,9 @@ def test_delete_profile_by_id(mock_supabase_client):
     mock_supabase_client.table.assert_called_once_with("profiles")
     mock_supabase_client.table().delete.assert_called_once()
     mock_supabase_client.table().delete().eq.assert_any_call("id", "user-123")
-    mock_supabase_client.table().delete().execute.assert_called_once()
+    mock_supabase_client.table().delete().eq().execute.assert_called_once()
 
-    assert result == {"data": "mocked_result"}
+    assert result["data"] == "mocked_result"
 
 def test_get_all_profiles_raises_runtime_error(mock_supabase_client):
     mock_supabase_client.table.side_effect = Exception("DB down")

@@ -6,6 +6,8 @@ from database.questionnaires import Questionnaires
 from database.questions import Questions
 from database.responses import Responses
 from database.answers import Answers
+from database.likert_scales import Likert_scales
+from database.likert_scale_options import Likert_scale_options
 
 from services.response_services import  submit_response
 from services.questionnaire_services import retrieve_questionnaire, retrieve_questionnaire_by_response
@@ -19,6 +21,8 @@ client = supabase_client.get_client()
 questionnaires_repo = Questionnaires(client)
 questions_repo = Questions(client)
 responses_repo = Responses(client)
+likert_scales_repo = Likert_scales(client)
+likert_scale_options_repo = Likert_scale_options(client)
 answers_repo = Answers(client)
 
 if __name__ == "__main__":
@@ -33,8 +37,8 @@ if __name__ == "__main__":
         questionnaire_details = current_questionnaire[0].data[0]["questionnaires"]["details"]
         questionnaire_timestamp = current_questionnaire[0].data[0]["questionnaires"]["created_at"]
     else:
-        current_questionnaire = retrieve_questionnaire(st.session_state["current_questionnaire_id"], questionnaires_repo, 
-        questions_repo, logger)
+        current_questionnaire = retrieve_questionnaire(st.session_state["current_questionnaire_id"], questionnaires_repo, questions_repo, likert_scales_repo, 
+        likert_scale_options_repo, logger)
         questionnaire_id = current_questionnaire[0].data[0]["id"]
         questionnaire_title = current_questionnaire[0].data[0]["title"]
         questionnaire_details = current_questionnaire[0].data[0]["details"]

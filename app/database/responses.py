@@ -22,7 +22,7 @@ class Responses:
                 .eq("questionnaire_id", questionnaire_id).eq("is_submitted", True).execute()
             )
         except Exception as e:
-            raise RuntimeError(f"Failed to retrieve responses: {e}")   
+            raise RuntimeError(f"Failed to retrieve responses by questionnaire: {e}")   
 
     """
     The get_response_by_id function gets the response that matches with the response_id parameter (for users)
@@ -81,7 +81,7 @@ class Responses:
         try:
             return self.supabase_client.rpc("get_response_category_means", {"q_id": questionnaire_id}).execute()
         except Exception as e:
-            raise RuntimeError(f"Failed to retrieve the specified draft: {e}")
+            raise RuntimeError(f"Failed to retrieve the category means from the responses: {e}")
 
     """
     The create_response function inserts a new row in the responses' table (for users)

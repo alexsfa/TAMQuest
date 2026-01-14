@@ -64,7 +64,7 @@ if __name__ == "__main__":
         st.session_state.create_questionnaire = not st.session_state.create_questionnaire
 
     if st.session_state.create_questionnaire:
-        if st.session_state["profile_id"] is None:
+        if st.session_state["user_id"] is None:
             st.error("You have to create a profile before submitting a questionnaire")
         else:
             st.text_input("Subject of questionnaire (app's name)", key="app_name")

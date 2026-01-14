@@ -27,9 +27,9 @@ def test_get_questions_by_questionnaire_id(mock_supabase_client):
     mock_supabase_client.table.assert_called_once_with("questions")
     mock_supabase_client.table().select.assert_called_once_with("id, question_text, category")
     mock_supabase_client.table().select().eq.assert_any_call("questionnaire_id", "q_123")
-    mock_supabase_client.table().select().execute.assert_called_once()
+    mock_supabase_client.table().select().eq().execute.assert_called_once()
 
-    assert result == {"data": "mocked_result"}
+    assert result["data"] == "mocked_result"
 
 def test_create_questions(mock_supabase_client):
     questions = Questions(mock_supabase_client)
@@ -45,7 +45,7 @@ def test_create_questions(mock_supabase_client):
     mock_supabase_client.table().insert.assert_called_once_with(questions_list)
     mock_supabase_client.table().insert().execute.assert_called_once()
 
-    assert result == {"data": "mocked_result"}
+    assert result["data"] == "mocked_result"
 
 def test_get_questions_by_questionnaire_id_raises_runtime_error(mock_supabase_client):
     mock_supabase_client.table.side_effect = Exception("DB down")

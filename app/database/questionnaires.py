@@ -47,7 +47,7 @@ class Questionnaires:
     The questionnaire_without_user_response function returns the questionnaires that
     the logged in user has not responded (for users)
     """
-    def questionnaires_without_user_response(self, user_id: str):
+    def get_questionnaires_without_user_response(self, user_id: str):
         # Calls the Postgres RPC function.
         try:
             return self.supabase_client.rpc("questionnaires_without_user_response",{"uid": user_id}).execute()
