@@ -93,7 +93,10 @@ def retrieve_questionnaire_by_response(response_id: str, responses_repo, questio
 The submit_questionnaire_likert_scale function submits the likert scale of the questionnaire
 and its corresponding options.
 """
-def submit_questionnaire_likert_scale(questionnaire_id:str, likert_scale_options:list):
+def submit_questionnaire_likert_scale(questionnaire_id:str, likert_scale_options:list, likert_scales_repo, likert_scale_options_repo, logger):
+
+    if len(likert_scale_options) == 0 :
+        raise ValueError(f"Failed to create the questionnaire's likert scale")
 
     q_likert_scale_info = None
     try:
@@ -131,7 +134,7 @@ def collect_likert_scale_options():
     return likert_scale_levels
 
 
-def submit_questionnaire( app_name: str, q_details: str, user_id: str, questionnaires_repo, questions_repo, logger, custom_questions:dict | None=None):
+def submit_questionnaire( app_name: str, q_details: str, user_id: str, questionnaires_repo, questions_repo, likert_scales_repo, likert_scale_options_repo, logger, custom_questions:dict | None=None):
 
     if app_name.strip() == "":
         st.warning("Please enter an app name.")
@@ -199,6 +202,7 @@ def submit_questionnaire( app_name: str, q_details: str, user_id: str, questionn
             logger.error("Database error: {e}")
 
         
-        likert_scale_insert = submit_questionnaire_likert_scale(questionnaire.data[0]["id"], questionnaire_likert_scale_options)
+        likert_scale_insert = submit_questionnaire_likert_scale(questionnaire.data[0]["id"], questionnaire_likert_scale_options, likert_scales_repo, likert_scale_options_repo, logger)
 
         return [questionnaire, questions_insert, likert_scale_insert]
+
