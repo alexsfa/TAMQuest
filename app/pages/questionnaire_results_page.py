@@ -58,6 +58,10 @@ if __name__ == "__main__":
 
     st.divider()
 
+    if count_of_responses == 0:
+        st.write("The response rate did not meet the minimum threshold required for statistical analysis")
+        st.stop()
+
     for category in basic_constructs:
 
         automated_questions_answers, custom_questions_answers = [], []

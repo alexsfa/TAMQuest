@@ -2,25 +2,6 @@ import pytest
 from unittest.mock import MagicMock, patch
 import services.questionnaire_services as q_services
 
-@pytest.fixture
-def mock_supabase_client():
-    client = MagicMock()
-    table = MagicMock()
-    query = MagicMock()
-
-    client.table.return_value = table
-    client.rpc.return_value = query
-    table.select.return_value = query
-    table.insert.return_value = query
-    table.delete.return_value = query
-
-    query.eq.return_value = query
-    query.order.return_value = query
-
-    query.execute.return_value = {"data": "mocked_result"}
-
-    return client
-
 def test_retrieve_questionnaire():
     questionnaires_repo = MagicMock()
     questions_repo = MagicMock()

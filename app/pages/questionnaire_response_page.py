@@ -31,7 +31,8 @@ if __name__ == "__main__":
     
     current_questionnaire = None
     if st.session_state.edit_response_mode == True:
-        current_questionnaire = retrieve_questionnaire_by_response(st.session_state["current_response_id"], responses_repo, questions_repo, logger)
+        current_questionnaire = retrieve_questionnaire_by_response(st.session_state["current_response_id"], responses_repo, questions_repo, likert_scales_repo, 
+        likert_scale_options_repo, logger)
         questionnaire_id = current_questionnaire[0].data[0]["questionnaires"]["id"]
         questionnaire_title = current_questionnaire[0].data[0]["questionnaires"]["title"]
         questionnaire_details = current_questionnaire[0].data[0]["questionnaires"]["details"]
