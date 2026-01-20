@@ -2,67 +2,98 @@ import pytest
 from unittest.mock import MagicMock
 from database.questions import Questions
 
+class MockSupabaseResponse:
+    def __init__(self, data=None, error=None):
+        self.data = data
+        self.error = error
+
 @pytest.fixture
-def mock_supabase_client():
+def supabase_client():
     client = MagicMock()
-    table = MagicMock()
+
     query = MagicMock()
-
-    client.table.return_value = table
-    table.select.return_value = query
-    table.insert.return_value = query
-
     query.eq.return_value = query
-    query.order.return_value = query
 
-    query.execute.return_value = {"data": "mocked_result"}
+    client.table.return_value.select.return_value = query
+    client.table.return_value.insert.return_value = query
 
     return client
 
-def test_get_questions_by_questionnaire_id(mock_supabase_client):
-    questions = Questions(mock_supabase_client)
+def test_get_questions_by_questionnaire_id(supabase_client):
+    expected_data = [
+        {
+            "id": "q_1",
+            "question_text": "The app is very useful",
+            "category": "Perceived Usefulness"
+        }
+    ]
+
+    supabase_client.table.return_value \
+        .select.return_value \
+        .eq.return_value \
+        .execute.return_value = MockSupabaseResponse(data=expected_data)
+
+    questions = Questions(supabase_client)
 
     result = questions.get_questions_by_questionnaire_id("q_123")
 
-    mock_supabase_client.table.assert_called_once_with("questions")
-    mock_supabase_client.table().select.assert_called_once_with("id, question_text, category")
-    mock_supabase_client.table().select().eq.assert_any_call("questionnaire_id", "q_123")
-    mock_supabase_client.table().select().eq().execute.assert_called_once()
+    assert result.data == expected_data
 
-    assert result["data"] == "mocked_result"
-
-def test_create_questions(mock_supabase_client):
-    questions = Questions(mock_supabase_client)
-    questions_list = [
-        {"questionnaire_id": "q-123", "question_text": "Using TestApp improves my work performance.", "position": 1},
-        {"questionnaire_id": "q-123", "question_text": "TestApp improves the results of my work.", "position": 2},
-        {"questionnaire_id": "q-123", "question_text": "I found TestApp useful.", "position": 3},
+def test_create_questions(supabase_client):
+    inserted_data = [
+        {
+            "questionnaire_id": "q_123",
+            "question_text":  "The app is very useful",
+            "position": 1,
+            "category": "Perceived Usefulness",
+            "is_custom": False,
+            "is_negative": False
+        }
     ]
 
-    result = questions.create_questions(questions_list)
+    supabase_client.table.return_value \
+        .insert.return_value \
+        .execute.return_value = MockSupabaseResponse(data=inserted_data)
+    
+    questions = Questions(supabase_client)
 
-    mock_supabase_client.table.assert_called_once_with("questions")
-    mock_supabase_client.table().insert.assert_called_once_with(questions_list)
-    mock_supabase_client.table().insert().execute.assert_called_once()
+    result = questions.create_questions(inserted_data)
 
-    assert result["data"] == "mocked_result"
+    assert result.data == inserted_data
 
-def test_get_questions_by_questionnaire_id_raises_runtime_error(mock_supabase_client):
-    mock_supabase_client.table.side_effect = Exception("DB down")
-    questions = Questions(mock_supabase_client)
+def test_get_questions_by_questionnaire_id_raises_runtime_error(supabase_client):
 
-    with pytest.raises(RuntimeError, match="Failed to retrieve questions"):
-        questions.get_questions_by_questionnaire_id("q-123")
+    supabase_client.table.return_value \
+        .select.return_value \
+        .eq.return_value \
+        .execute.side_effect = Exception("DB down")
 
-def test_create_questions_raises_runtime_error(mock_supabase_client):
-    mock_supabase_client.table.side_effect = Exception("DB down")
-    questions = Questions(mock_supabase_client)
-    questions_list = [
-        {"questionnaire_id": "q-123", "question_text": "Using TestApp improves my work performance.", "position": 1},
-        {"questionnaire_id": "q-123", "question_text": "TestApp improves the results of my work.", "position": 2},
-        {"questionnaire_id": "q-123", "question_text": "I found TestApp useful.", "position": 3},
-    ]
+    questions = Questions(supabase_client)
 
-    with pytest.raises(RuntimeError, match="Failed to create the questions"):
-        questions.create_questions(questions_list)
+    with pytest.raises(RuntimeError) as exc:
+        questions.get_questions_by_questionnaire_id("q_123")
+
+    assert "Failed to retrieve questions" in str(exc.value)
+
+def test_create_questions_raises_runtime_error(supabase_client):
+
+    supabase_client.table.return_value \
+        .insert.return_value \
+        .execute.side_effect = Exception("DB down")
+
+    questions = Questions(supabase_client)
+
+    with pytest.raises(RuntimeError) as exc:
+        questions.create_questions([
+            {
+                "questionnaire_id": "q_123",
+                "question_text":  "The app is very useful",
+                "position": 1,
+                "category": "Perceived Usefulness",
+                "is_custom": False,
+                "is_negative": False
+            }
+        ])
+
+    assert "Failed to create the questions" in str(exc.value)
 

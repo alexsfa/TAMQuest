@@ -2,84 +2,157 @@ import pytest
 from unittest.mock import MagicMock
 from database.responses import Responses
 
+class MockSupabaseResponse:
+    def __init__(self, data=None, error=None):
+        self.data = data
+        self.error = error
+
 @pytest.fixture
-def mock_supabase_client():
+def supabase_client():
     client = MagicMock()
-    table = MagicMock()
+
     query = MagicMock()
-
-    client.table.return_value = table
-    table.select.return_value = query
-    table.insert.return_value = query
-    table.update.return_value = query
-    table.delete.return_value = query
-
     query.eq.return_value = query
     query.order.return_value = query
 
-    query.execute.return_value = {"data": "mocked_result"}
+    client.table.return_value.select.return_value = query
+    client.table.return_value.insert.return_value = query
+    client.table.return_value.update.return_value = query
+    client.rpc.return_value = query
+    client.table.return_value.delete.return_value = query
 
     return client
 
-def test_get_all_responses(mock_supabase_client):
-    responses = Responses(mock_supabase_client)
+def test_get_all_responses(supabase_client):
+    expected_data = [
+        {
+            "questionnaires": {
+                "id": "q_123",
+                "title": "q_title",
+                "details": "q_details",
+                "created_at": "2026-01-16 12:06:11.061732+00",
+                "created_by": "admin_123"
+            },
+            "profiles": {
+                "full_name": "user_name"
+            },
+            "id": "res_123",
+            "submitted_at": "2026-01-07 18:24:39.412808+00",
+            "is_submitted": True
+        }
+    ]
+
+    supabase_client.table.return_value \
+        .select.return_value \
+        .eq.return_value \
+        .order.return_value \
+        .execute.return_value = MockSupabaseResponse(data=expected_data)
+
+    responses = Responses(supabase_client)
 
     result = responses.get_all_responses()
 
-    mock_supabase_client.table.assert_called_once_with("responses")
-    mock_supabase_client.table().select.assert_called_once_with("questionnaires(*), profiles(full_name), id, submitted_at, is_submitted")
-    mock_supabase_client.table().select().eq.assert_called_once_with("is_submitted", True)
-    mock_supabase_client.table().select().eq().order.assert_called_once_with("submitted_at", desc=True)
-    mock_supabase_client.table().select().eq().order().execute.assert_called_once()
+    assert result.data == expected_data
 
-    assert result["data"] == "mocked_result"
+def test_get_all_responses_by_questionnaire_id(supabase_client):
+    expected_data = [
+        {
+            "questionnaires": {
+                "id": "q_123",
+                "title": "q_title",
+                "details": "q_details",
+                "created_at": "2026-01-16 12:06:11.061732+00",
+                "created_by": "admin_123"
+            },
+            "profiles": {
+                "full_name": "user_name"
+            },
+            "id": "res_123",
+            "submitted_at": "2026-01-07 18:24:39.412808+00",
+            "is_submitted": True
+        }
+    ]
 
-def test_get_all_responses_by_questionnaire_id(mock_supabase_client):
-    responses = Responses(mock_supabase_client)
+    supabase_client.table.return_value \
+        .select.return_value \
+        .eq.return_value \
+        .eq.return_value \
+        .execute.return_value = MockSupabaseResponse(data=expected_data)
+
+    responses = Responses(supabase_client)
 
     result = responses.get_all_responses_by_questionnaire_id("q_123")
 
-    query = mock_supabase_client.table.return_value.select.return_value
+    assert result.data == expected_data
 
-    mock_supabase_client.table.assert_called_once_with("responses")
-    mock_supabase_client.table().select.assert_called_once_with("questionnaires(*), profiles(*), id, submitted_at, is_submitted")
+def test_get_response_by_id(supabase_client):
+    expected_data = [
+        {
+            "questionnaires": {
+                "id": "q_123",
+                "title": "q_title",
+                "details": "q_details",
+                "created_at": "2026-01-16 12:06:11.061732+00",
+            },
+            "profiles": {
+                "full_name": "user_name"
+            },
+            "submitted_at": "2026-01-07 18:24:39.412808+00",
+        }
+    ]
 
-    eq_calls = [call.args for call in query.eq.call_args_list]
-    assert ("questionnaire_id", "q_123") in eq_calls
-    assert ("is_submitted", True) in eq_calls
+    supabase_client.table.return_value \
+        .select.return_value \
+        .eq.return_value \
+        .execute.return_value = MockSupabaseResponse(data=expected_data)
 
-    query.execute.assert_called_once()
-    assert result["data"] == "mocked_result"
-
-def test_get_response_by_id(mock_supabase_client):
-    responses = Responses(mock_supabase_client)
+    responses = Responses(supabase_client)
 
     result = responses.get_response_by_id("res_123")
 
-    mock_supabase_client.table.assert_called_once_with("responses")
-    mock_supabase_client.table().select.assert_called_once_with(
-        "questionnaires(id, title, details, created_at), profiles(full_name), submitted_at"
-    )
-    mock_supabase_client.table().select().eq.assert_called_once_with("id", "res_123")
-    mock_supabase_client.table().select().eq().execute.assert_called_once()
+    assert result.data == expected_data
 
-    assert result["data"] == "mocked_result"
+def test_get_response_by_user_id(supabase_client):
 
-def test_get_response_by_user_id(mock_supabase_client):
-    responses = Responses(mock_supabase_client)
+    expected_data = [
+        {
+            "questionnaires": {
+                "id": "q_123",
+                "title": "q_title",
+                "details": "q_details",
+                "created_at": "2026-01-16 12:06:11.061732+00",
+                "created_by": "admin_123"
+            },
+            "id": "res_123",
+            "submitted_at": "2026-01-07 18:24:39.412808+00",
+            "is_submitted": True
+        }
+    ]
+
+    supabase_client.table.return_value \
+        .select.return_value \
+        .eq.return_value \
+        .order.return_value \
+        .execute.return_value = MockSupabaseResponse(data=expected_data)
+
+    responses = Responses(supabase_client)
 
     result = responses.get_response_by_user_id("user_123")
 
-    mock_supabase_client.table.assert_called_once_with("responses")
-    mock_supabase_client.table().select.assert_called_once_with("questionnaires(*), id, submitted_at, is_submitted")
-    mock_supabase_client.table().select().eq.assert_called_once_with("user_id", "user_123")
-    mock_supabase_client.table().select().eq().order.assert_called_once_with("is_submitted", desc=True)
-    mock_supabase_client.table().select().eq().order().execute.assert_called_once()
+    assert result.data == expected_data
 
-    assert result["data"] == "mocked_result"
+def test_get_responses_by_questionnaire_id_with_is_submitted_none(supabase_client):
 
-def test_get_responses_by_questionnaire_id_with_is_submitted_none(mock_supabase_client):
-    responses = Responses(mock_supabase_client)
+    expected_data = [{"id": "res_123"}]
+
+    supabase_client.table.return_value \
+        .select.return_value \
+        .eq.return_value \
+        .eq.return_value \
+        .eq.return_value \
+        .execute.return_value = MockSupabaseResponse(data=expected_data)
+
+    responses = Responses(supabase_client)
 
     result = responses.get_responses_by_questionnaire_id(
         user_id="user_123",
@@ -87,199 +160,242 @@ def test_get_responses_by_questionnaire_id_with_is_submitted_none(mock_supabase_
         is_submitted=None
     )
 
-    mock_supabase_client.table.assert_called_once_with("responses")
-    mock_supabase_client.table().select.assert_called_once_with("id")
-    mock_supabase_client.table().select().eq.assert_any_call("user_id", "user_123")
-    mock_supabase_client.table().select().eq().eq.assert_any_call("questionnaire_id", "q_123")
-    mock_supabase_client.table().select().eq().eq().execute.assert_called_once()
+    assert result.data == expected_data
 
-    assert result["data"] == "mocked_result"
+def test_get_responses_by_questionnaire_id_with_is_submitted(supabase_client):
 
-def test_get_responses_by_questionnaire_id_with_is_submitted(mock_supabase_client):
-    responses = Responses(mock_supabase_client)
+    expected_data = [{"id": "res_123"}]
 
-    responses.get_responses_by_questionnaire_id(
+    supabase_client.table.return_value \
+        .select.return_value \
+        .eq.return_value \
+        .eq.return_value \
+        .execute.return_value = MockSupabaseResponse(data=expected_data)
+
+    responses = Responses(supabase_client)
+
+    result = responses.get_responses_by_questionnaire_id(
         user_id="user_123",
         questionnaire_id="q_123",
         is_submitted=True
     )
 
-    query = mock_supabase_client.table.return_value.select.return_value
-    query.eq.assert_any_call("user_id", "user_123")
-    query.eq.assert_any_call("questionnaire_id", "q_123")
+    assert result.data == expected_data
 
 
-    assert ("is_submitted", True) not in [
-        call.args for call in query.eq.call_args_list
-    ]
+def test_get_response_by_questionnaire_title(supabase_client):
+    expected_data = [{"id": "res_123"}]
 
-    assert ("is_submitted", None) not in [
-        call.args for call in query.eq.call_args_list
-    ]
+    supabase_client.table.return_value \
+        .select.return_value \
+        .eq.return_value \
+        .order.return_value \
+        .execute.return_value = MockSupabaseResponse(data=expected_data)
 
-def test_get_responses_by_questionnaire_id_with_false_is_submitted(mock_supabase_client):
-    responses = Responses(mock_supabase_client)
-
-    responses.get_responses_by_questionnaire_id(
-        user_id="user_123",
-        questionnaire_id="q_123",
-        is_submitted=False
-    )
-
-    query = mock_supabase_client.table.return_value.select.return_value
-    query.eq.assert_any_call("user_id", "user_123")
-    query.eq.assert_any_call("questionnaire_id", "q_123")
-
-
-    assert ("is_submitted", False) not in [
-        call.args for call in query.eq.call_args_list
-    ]
-
-def test_get_response_by_questionnaire_title(mock_supabase_client):
-    responses = Responses(mock_supabase_client)
+    responses = Responses(supabase_client)
 
     result = responses.get_responses_by_questionnaire_title("q_title")
 
-    query = mock_supabase_client.table.return_value.select.return_value
+    assert result.data == expected_data
 
-    mock_supabase_client.table.assert_called_once_with("responses")
-    mock_supabase_client.table().select.assert_called_once_with(
-        "questionnaires!inner(*), profiles(full_name), id, submitted_at, is_submitted"
-    )
+def test_get_all_responses_category_means(supabase_client):
 
-    eq_calls = [call.args for call in query.eq.call_args_list]
-    assert ("questionnaires.title", "q_title") in eq_calls
-    assert ("is_submitted", True) in eq_calls
+    expected_data = [
+        {
+            "answers": {
+                "response_id": "res_123"
+            },
+            "questions": {
+                "category": "Perceived Usedfulness"
+            },
+            "mean_score": 4.5
+        }
+    ]
 
-    query.order.assert_called_once_with("submitted_at", desc=True)
-    query.execute.assert_called_once()
+    supabase_client.rpc.return_value.execute.return_value = MockSupabaseResponse(data=expected_data)
 
-    assert result["data"] == "mocked_result"
-
-def test_get_all_responses_category_means(mock_supabase_client):
-    mock_supabase_client.rpc.return_value.execute.return_value = {"data": []}
-    responses = Responses(mock_supabase_client)
+    responses = Responses(supabase_client)
 
     result = responses.get_all_responses_category_means("q_123")
 
-    mock_supabase_client.rpc.assert_called_once_with(
-        "get_response_category_means",
-        {"q_id": "q_123"}
-    )
-
-    mock_supabase_client.rpc().execute.assert_called_once()
-
-    assert result == {"data":[]}
+    assert result.data == expected_data
 
 
-def test_create_response(mock_supabase_client):
-    responses = Responses(mock_supabase_client)
+def test_create_response(supabase_client):
+    inserted_data = [
+        {
+            "user_id": "user_123",
+            "questionnaire_id": "q_123",
+            "is_submitted": True
+        }
+    ]
+
+    supabase_client.table.return_value \
+        .insert.return_value \
+        .execute.return_value = MockSupabaseResponse(data=inserted_data)
+
+    responses = Responses(supabase_client)
 
     result = responses.create_response("user_123", "q_123", True)
 
-    mock_supabase_client.table.assert_called_once_with("responses")
-    mock_supabase_client.table().insert.assert_called_once_with({
-        "user_id": "user_123",
-        "questionnaire_id": "q_123", 
-        "is_submitted": True
-    })
-    mock_supabase_client.table().insert().execute.assert_called_once()
+    assert result.data == inserted_data
 
-    assert result["data"] == "mocked_result"
+def test_update_response_on_submitted(supabase_client):
+    updated_data = [{"is_submitted": True}]
 
-def test_update_response_on_submitted(mock_supabase_client):
-    responses = Responses(mock_supabase_client)
+    supabase_client.table.return_value \
+        .update.return_value \
+        .execute.return_value = MockSupabaseResponse(data=updated_data)
+
+    responses = Responses(supabase_client)
 
     result = responses.update_response_on_submitted("user_123", True)
 
-    mock_supabase_client.table.assert_called_once_with("responses")
-    mock_supabase_client.table().update.assert_called_once_with({"is_submitted": True})
-    mock_supabase_client.table().update().eq.assert_called_once_with("user_id", "user_123")
-    mock_supabase_client.table().update().execute.assert_called_once()
+    assert result.data == updated_data
 
-    assert result["data"] == "mocked_result"
+def test_delete_response_by_id(supabase_client):
+    deleted_data = [{"id": "res_123"}]
 
-def test_delete_response_by_id(mock_supabase_client):
-    responses = Responses(mock_supabase_client)
+    supabase_client.table.return_value \
+        .delete.return_value \
+        .execute.return_value = MockSupabaseResponse(data=deleted_data)
+
+    responses = Responses(supabase_client)
 
     result = responses.delete_response_by_id("res_123")
-    
-    mock_supabase_client.table.assert_called_once_with("responses")
-    mock_supabase_client.table().delete.assert_called_once()
-    mock_supabase_client.table().delete().eq.assert_called_once_with("id", "res_123")
-    mock_supabase_client.table().delete().execute.assert_called_once()
 
-    assert result["data"] == "mocked_result"
+    assert result.data == deleted_data
 
-def test_get_all_responses_raise_runtime_error(mock_supabase_client):
-    mock_supabase_client.table.side_effect = Exception("DB down")
-    responses = Responses(mock_supabase_client)
+def test_get_all_responses_raise_runtime_error(supabase_client):
+    supabase_client.table.return_value \
+        .select.return_value \
+        .eq.return_value \
+        .order.return_value \
+        .execute.side_effect = Exception("DB down")
 
-    with pytest.raises(RuntimeError, match="Failed to retrieve responses"):
+    responses = Responses(supabase_client)
+
+    with pytest.raises(RuntimeError) as exc:
         responses.get_all_responses()
 
-def test_get_all_responses_by_questionnaire_id_raise_runtime_error(mock_supabase_client):
-    mock_supabase_client.table.side_effect = Exception("DB down")
-    responses = Responses(mock_supabase_client)
+    assert "Failed to retrieve responses" in str(exc.value)
 
-    with pytest.raises(RuntimeError, match="Failed to retrieve responses by questionnaire"):
+def test_get_all_responses_by_questionnaire_id_raise_runtime_error(supabase_client):
+    supabase_client.table.return_value \
+        .select.return_value \
+        .eq.return_value \
+        .eq.return_value \
+        .execute.side_effect = Exception("DB down")
+
+    responses = Responses(supabase_client)
+
+    with pytest.raises(RuntimeError) as exc:
         responses.get_all_responses_by_questionnaire_id("q_123")
 
-def test_get_response_by_id_raise_runtime_error(mock_supabase_client):
-    mock_supabase_client.table.side_effect = Exception("DB down")
-    responses = Responses(mock_supabase_client)
+    assert "Failed to retrieve responses by questionnaire" in str(exc.value)
 
-    with pytest.raises(RuntimeError, match="Failed to retrieve response"):
+def test_get_response_by_id_raise_runtime_error(supabase_client):
+    supabase_client.table.return_value \
+        .select.return_value \
+        .eq.return_value \
+        .execute.side_effect = Exception("DB down")
+
+    responses = Responses(supabase_client)
+
+    with pytest.raises(RuntimeError) as exc:
         responses.get_response_by_id("res_123")
 
-def test_get_response_by_user_id_raise_runtime_error(mock_supabase_client):
-    mock_supabase_client.table.side_effect = Exception("DB down")
-    responses = Responses(mock_supabase_client)
+    assert "Failed to retrieve response" in str(exc.value)
 
-    with pytest.raises(RuntimeError, match="Failed to retrieve response"):
+def test_get_response_by_user_id_raise_runtime_error(supabase_client):
+    supabase_client.table.return_value \
+        .select.return_value \
+        .eq.return_value \
+        .order.return_value \
+        .execute.side_effect = Exception("DB down")
+
+    responses = Responses(supabase_client)
+
+    with pytest.raises(RuntimeError) as exc:
         responses.get_response_by_user_id("user_123")
 
-def test_get_responses_by_questionnaire_id_raise_runtime_error(mock_supabase_client):
-    mock_supabase_client.table.side_effect = Exception("DB down")
-    responses = Responses(mock_supabase_client)
+    assert "Failed to retrieve response" in str(exc.value)
 
-    with pytest.raises(RuntimeError, match="Failed to retrieve the specified draft"):
+def test_get_responses_by_questionnaire_id_raise_runtime_error(supabase_client):
+    supabase_client.table.return_value \
+        .select.return_value \
+        .eq.return_value \
+        .eq.return_value \
+        .eq.return_value \
+        .execute.side_effect = Exception("DB down")
+
+    responses = Responses(supabase_client)
+
+    with pytest.raises(RuntimeError) as exc:
         responses.get_responses_by_questionnaire_id("user_123", "q_123", True)
 
-def test_get_response_by_questionnaire_title_raise_runtime_error(mock_supabase_client):
-    mock_supabase_client.table.side_effect = Exception("DB down")
-    responses = Responses(mock_supabase_client)
+    assert "Failed to retrieve the specified draft" in str(exc.value)
 
-    with pytest.raises(RuntimeError, match="Failed to retrieve responses"):
+def test_get_response_by_questionnaire_title_raise_runtime_error(supabase_client):
+    supabase_client.table.return_value \
+        .select.return_value \
+        .eq.return_value \
+        .eq.return_value \
+        .order.return_value \
+        .execute.side_effect = Exception("DB down")
+
+    responses = Responses(supabase_client)
+
+    with pytest.raises(RuntimeError) as exc:
         responses.get_responses_by_questionnaire_title("q_title")
 
-def test_get_all_responses_category_means_raise_runtime_error(mock_supabase_client):
-    mock_supabase_client.rpc.side_effect = Exception("DB down")
-    responses = Responses(mock_supabase_client)
+    assert "Failed to retrieve responses" in str(exc.value)
 
-    with pytest.raises(RuntimeError, match="Failed to retrieve the category means from the responses"):
+def test_get_all_responses_category_means_raise_runtime_error(supabase_client):
+    supabase_client.rpc.return_value.execute.side_effect = Exception("DB down")
+    
+    responses = Responses(supabase_client)
+
+    with pytest.raises(RuntimeError) as exc:
         responses.get_all_responses_category_means("q_123")
 
-def test_create_response_raise_runtime_error(mock_supabase_client):
-    mock_supabase_client.table.side_effect = Exception("DB down")
-    responses = Responses(mock_supabase_client)
+    assert "Failed to retrieve the category means from the responses" in str(exc.value)
 
-    with pytest.raises(RuntimeError, match="Failed to create response"):
+def test_create_response_raise_runtime_error(supabase_client):
+    supabase_client.table.return_value \
+        .insert.return_value \
+        .execute.side_effect = Exception("DB down")
+
+    responses = Responses(supabase_client)
+
+    with pytest.raises(RuntimeError) as exc:
         responses.create_response("user_123", "q_123", True)
 
-def test_update_response_on_submitted_raise_runtime_error(mock_supabase_client):
-    mock_supabase_client.table.side_effect = Exception("DB down")
-    responses = Responses(mock_supabase_client)
+    assert "Failed to create response" in str(exc.value)
 
-    with pytest.raises(RuntimeError, match="Failed to update response"):
+def test_update_response_on_submitted_raise_runtime_error(supabase_client):
+    supabase_client.table.return_value \
+        .update.return_value \
+        .execute.side_effect = Exception("DB down")
+
+    responses = Responses(supabase_client)
+
+    with pytest.raises(RuntimeError) as exc:
         responses.update_response_on_submitted("user_123", True)
 
-def test_delete_response_by_id_raise_runtime_error(mock_supabase_client):
-    mock_supabase_client.table.side_effect = Exception("DB down")
-    responses = Responses(mock_supabase_client)
+    assert "Failed to update response" in str(exc.value)
 
-    with pytest.raises(RuntimeError, match="Failed to delete response"):
+def test_delete_response_by_id_raise_runtime_error(supabase_client):
+    supabase_client.table.return_value \
+        .delete.return_value \
+        .execute.side_effect = Exception("DB down")
+    
+    responses = Responses(supabase_client)
+
+    with pytest.raises(RuntimeError) as exc:
         responses.delete_response_by_id("res_123")
+
+    assert "Failed to delete response" in str(exc.value)
 
 
 

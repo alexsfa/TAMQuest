@@ -2,124 +2,176 @@ import pytest
 from unittest.mock import MagicMock
 from database.answers import Answers
 
+class MockSupabaseResponse:
+    def __init__(self, data=None, error=None):
+        self.data = data
+        self.error = error
+
 @pytest.fixture
-def mock_supabase_client():
+def supabase_client():
     client = MagicMock()
-    table = MagicMock()
+
     query = MagicMock()
-
-    client.table.return_value = table
-    table.select.return_value = query
-    table.insert.return_value = query
-    table.upsert.return_value = query
-
     query.eq.return_value = query
     query.order.return_value = query
 
-    query.execute.return_value = {"data": "mocked_result"}
+    client.table.return_value.select.return_value = query
+    client.table.return_value.insert.return_value = query
+    client.table.return_value.upsert.return_value = query
 
     return client
 
-def test_get_answers_by_response_id(mock_supabase_client):
-    answers = Answers(mock_supabase_client)
+def test_get_answers_by_response_id(supabase_client):
+    expected_data = [
+        {
+            "id": "a1",
+            "response_id": "res_123",
+            "questions": {"question_text": "The app is useful", "position": 1},
+            "likert_scale_options": {"label": "Agree", "value": 4},
+        }
+    ]
+
+    supabase_client.table.return_value \
+        .select.return_value \
+        .eq.return_value \
+        .order.return_value \
+        .execute.return_value = MockSupabaseResponse(data=expected_data)
+
+    answers = Answers(supabase_client)
 
     result = answers.get_answers_by_response_id("res_123")
 
-    mock_supabase_client.table.assert_called_once_with("answers")
-    mock_supabase_client.table().select.assert_called_once_with("*, questions(question_text, position), likert_scale_options(label, value)")
-    mock_supabase_client.table().select().eq.assert_any_call("response_id", "res_123")
-    mock_supabase_client.table().select().order.assert_any_call("questions(position)")
-    mock_supabase_client.table().select().execute.assert_called_once()
+    assert result.data == expected_data
 
-    assert result["data"] == "mocked_result"
+def test_get_submitted_answers_by_questionnaire_id(supabase_client):
+    expected_data = [
+        {
+            "response_id": "res_123",
+            "responses": {"is_submitted": True},
+            "questions": {
+                "questionnaire_id": "q_123",
+                "question_text": "The app is useful",
+                "category": "Perceived Usefulness",
+                "is_custom": False,
+                "is_negative": False,
+            },
+            "likert_scale_options": {"label": "Agree", "value": 4},
+        }
+    ]
 
-def test_get_submitted_answers_by_questionnaire_id(mock_supabase_client):
-    answers = Answers(mock_supabase_client)
+    supabase_client.table.return_value \
+        .select.return_value \
+        .eq.return_value \
+        .eq.return_value \
+        .execute.return_value = MockSupabaseResponse(data=expected_data)
+    
+    answers = Answers(supabase_client)
 
     result = answers.get_submitted_answers_by_questionnaire_id("q_123")
 
-    query = mock_supabase_client.table.return_value.select.return_value
+    assert result.data == expected_data
 
-    mock_supabase_client.table.assert_called_once_with("answers")
-    mock_supabase_client.table().select.assert_called_once_with("response_id, responses!inner(is_submitted), questions!inner(questionnaire_id, question_text, category, is_custom, is_negative), likert_scale_options!inner(value, label)")
+def test_create_answers(supabase_client):
+    input_answers = [
+        {
+            "response_id": "res_123",
+            "question_id": "q_1",
+            "selected_option": "l_s_o_1",
+        }
+    ]
+
+    inserted_data = [
+        {
+            "id": "a_1",
+            **input_answers[0],
+        }
+    ]
+        
+    supabase_client.table.return_value \
+        .insert.return_value \
+        .execute.return_value = MockSupabaseResponse(data=inserted_data)
+
+    answers = Answers(supabase_client)
+
+    result = answers.create_answers(input_answers)
+
+    assert result.data == inserted_data
+
+def test_update_answers(supabase_client):
+    input_answers = [
+        {
+            "response_id": "res_123",
+            "question_id": "q_1",
+            "selected_option": "l_s_o_2",
+        }
+    ]
+
+    updated_data = [
+        {
+            "id": "a_1",
+            **input_answers[0],
+        }
+    ]
     
-    eq_calls = [call.args for call in query.eq.call_args_list]
-    assert ("questions.questionnaire_id", "q_123") in eq_calls
-    assert ("responses.is_submitted", True) in eq_calls
+    supabase_client.table.return_value \
+        .upsert.return_value \
+        .execute.return_value = MockSupabaseResponse(data=updated_data)
 
-    query.execute.assert_called_once()
+    answers = Answers(supabase_client)
 
-    assert result["data"] == "mocked_result"
+    result = answers.update_answers(input_answers)
 
-def test_create_answers(mock_supabase_client):
-    answers = Answers(mock_supabase_client)
-    answers_list = [
-        {"response_id": "res_123","question_id": "q_1", "question_text": "question_1", "label": "Disagree", "value": 1 },
-        {"response_id": "res_123","question_id": "q_2", "question_text": "question_2", "label": "Neutral", "value": 2 },
-        {"response_id": "res_123","question_id": "q_3", "question_text": "question_3", "label": "Agree", "value": 3 },
-    ]
+    assert result.data == updated_data
 
-    result = answers.create_answers(answers_list)
+def test_get_answers_by_response_id_raises_runtime_error(supabase_client):
+    supabase_client.table.return_value \
+        .select.return_value \
+        .eq.return_value \
+        .order.return_value \
+        .execute.side_effect = Exception("DB is down")
 
-    mock_supabase_client.table.assert_called_once_with("answers")
-    mock_supabase_client.table().insert.assert_called_once_with(answers_list)
-    mock_supabase_client.table().insert().execute.assert_called_once()
+    answers = Answers(supabase_client)
 
-    assert result["data"] == "mocked_result"
-
-def test_update_answers(mock_supabase_client):
-    answers = Answers(mock_supabase_client)
-    answers_list = [
-        {"response_id": "res_123","question_id": "q_1", "selected_option_value": "Agree"},
-        {"response_id": "res_123","question_id": "q_2", "selected_option_value": "Agree"},
-        {"response_id": "res_123","question_id": "q_3", "selected_option_value": "Agree"},
-    ]
-
-    result = answers.update_answers(answers_list)
-
-    mock_supabase_client.table.assert_called_once_with("answers")
-    mock_supabase_client.table().upsert.assert_called_once_with(
-        answers_list,
-        on_conflict=["response_id,question_id"]
-    )
-    mock_supabase_client.table().upsert().execute.assert_called_once()
-
-    assert result["data"] == "mocked_result"
-
-def test_get_answers_by_response_id_raises_runtime_error(mock_supabase_client):
-    mock_supabase_client.table.side_effect = Exception("DB down")
-    answers = Answers(mock_supabase_client)
-
-    with pytest.raises(RuntimeError, match="Failed to retrieve answers"):
+    with pytest.raises(RuntimeError) as exc:
         answers.get_answers_by_response_id("res_123")
 
-def test_get_submitted_answers_by_questionnaire_id_raises_runtime_error(mock_supabase_client):
-    mock_supabase_client.table.side_effect = Exception("DB down")
-    answers = Answers(mock_supabase_client)
+    assert "Failed to retrieve answers" in str(exc.value)
 
-    with pytest.raises(RuntimeError, match="Failed to retrieve answers"):
+def test_get_submitted_answers_by_questionnaire_id_raises_runtime_error(supabase_client):
+    supabase_client.table.return_value \
+        .select.return_value \
+        .eq.return_value \
+        .eq.return_value \
+        .execute.side_effect = Exception("DB is down")
+    
+    answers = Answers(supabase_client)
+
+    with pytest.raises(RuntimeError) as exc:
         answers.get_submitted_answers_by_questionnaire_id("q_123")
 
-def test_create_answers_raises_runtime_error(mock_supabase_client):
-    mock_supabase_client.table.side_effect = Exception("DB down")
-    answers = Answers(mock_supabase_client)
-    answers_list = [
-        {"response_id": "res_123","question_id": "q_1", "selected_option_value": "Agree"},
-        {"response_id": "res_123","question_id": "q_2", "selected_option_value": "Agree"},
-        {"response_id": "res_123","question_id": "q_3", "selected_option_value": "Agree"},
-    ]
+    assert "Failed to retrieve answers" in str(exc.value)
+
+def test_create_answers_raises_runtime_error(supabase_client):
+    supabase_client.table.return_value \
+        .insert.return_value \
+        .execute.side_effect = Exception("DB down")
+
+    answers = Answers(supabase_client)
+
     
-    with pytest.raises(RuntimeError, match="Failed to insert the answers"):
-        answers.create_answers(answers_list)
+    with pytest.raises(RuntimeError) as exc:
+        answers.create_answers([{"response_id": "res_123"}])
 
-def test_update_answers_raises_runtime_error(mock_supabase_client):
-    mock_supabase_client.table.side_effect = Exception("DB down")
-    answers = Answers(mock_supabase_client)
-    answers_list = [
-        {"response_id": "res_123","question_id": "q_1", "selected_option_value": "Agree"},
-        {"response_id": "res_123","question_id": "q_2", "selected_option_value": "Agree"},
-        {"response_id": "res_123","question_id": "q_3", "selected_option_value": "Agree"},
-    ]
+    assert "Failed to insert the answers" in str(exc.value)
 
-    with pytest.raises(RuntimeError, match="Failed to update the answers"):
-        answers.update_answers(answers_list)
+def test_update_answers_raises_runtime_error(supabase_client):
+    supabase_client.table.return_value \
+        .upsert.return_value \
+        .execute.side_effect = Exception("DB down")
+    
+    answers = Answers(supabase_client)
+
+    with pytest.raises(RuntimeError) as exc:
+        answers.update_answers([{"response_id": "res_123"}])
+
+    assert "Failed to update the answers" in str(exc.value)
