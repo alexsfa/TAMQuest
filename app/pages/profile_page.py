@@ -2,6 +2,8 @@ import streamlit as st
 from datetime import date
 import html, re
 
+from app import profiles_repo, responses_repo, client
+
 from database.profiles import Profiles
 from database.responses import Responses
 
@@ -10,10 +12,6 @@ from utils.menu import menu
 from utils.logger_config import logger
 from utils.components import create_response_card, create_profile_form, create_responses_management_ui
 from utils.redirections import redirect_to_respond_page, redirect_to_view_page, redirect_to_edit_page
-
-client = supabase_client.get_client()
-profiles_repo = Profiles(client)
-responses_repo = Responses(client)
 
 current_page = "profile_page"
 

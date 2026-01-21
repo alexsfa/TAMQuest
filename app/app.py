@@ -5,6 +5,10 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 from database.questionnaires import Questionnaires
+from database.questions import Questions
+from database.likert_scales import Likert_scales
+from database.likert_scale_options import Likert_scale_options
+from database.answers import Answers
 from database.responses import Responses
 from database.profiles import Profiles
 
@@ -21,6 +25,10 @@ current_page = "main_page"
 
 client = supabase_client.get_client()
 questionnaires_repo = Questionnaires(client)
+questions_repo = Questions(client)
+answers_repo = Answers(client)
+likert_scales_repo = Likert_scales(client)
+likert_scale_options_repo = Likert_scale_options(client)
 responses_repo = Responses(client)
 profiles_repo = Profiles(client)
 

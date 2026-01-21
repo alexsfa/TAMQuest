@@ -2,6 +2,8 @@ import streamlit as st
 import re
 from datetime import datetime
 
+from app import client, answers_repo, responses_repo
+
 from database.answers import Answers
 from database.responses import Responses
 
@@ -11,10 +13,6 @@ from utils import supabase_client
 from utils.menu import menu
 from utils.logger_config import logger
 from utils.components import format_time, set_answer_layout
-
-client = supabase_client.get_client()
-answers_repo = Answers(client)
-responses_repo = Responses(client)
         
 if __name__ == "__main__":
     

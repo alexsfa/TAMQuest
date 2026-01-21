@@ -1,5 +1,6 @@
 import streamlit as st
 
+# Questions for each basic TAM construct
 ESSENTIAL_TAM_QUESTIONS = {
     "Perceived Usefulness": [
         "Using {app_name} improves my work performance.",
@@ -27,6 +28,7 @@ ESSENTIAL_TAM_QUESTIONS = {
     ],
 }
 
+# Questions for each additional TAM construct.
 ADDITIONAL_TAM_QUESTIONS = {
     "Technology Support": [ 
         "{app_name} technical problem hotline is available at any time.",
@@ -76,7 +78,11 @@ ADDITIONAL_TAM_QUESTIONS = {
 
 CUSTOM_QUESTIONS = {}
 
-def generate_tam_questions(questions: dict, app_name: str):
+'''
+The generate_tam_questions replaces the app_name placeholder with the String that takes as an argument
+for all the essential TAM questions and returns the resulted dictionary.
+'''
+def generate_tam_questions(app_name: str):
     formatted_questions = {}
     for category, questions in ESSENTIAL_TAM_QUESTIONS.items():
         formatted_questions[category] = [
@@ -85,7 +91,11 @@ def generate_tam_questions(questions: dict, app_name: str):
 
     return formatted_questions
 
-def generate_additional_tam_questions(questions: dict, app_name: str):
+'''
+The generate_additional_tam_questions replaces the app_name placeholder with the String that takes as an argument
+for all the additional TAM questions of each selected category and returns the resulted dictionary.
+'''
+def generate_additional_tam_questions(app_name: str):
     formatted_questions = {}
     for category, questions in ADDITIONAL_TAM_QUESTIONS.items():
         if st.session_state[category]:
@@ -95,6 +105,10 @@ def generate_additional_tam_questions(questions: dict, app_name: str):
 
     return formatted_questions
 
+'''
+The add_custom_questions_categories adds all the questions' categories that have been selected
+on a list with the categories available for the user to add a custom question on.
+'''
 def add_custom_questions_categories():
     additional_custom_questions_categories = []
     for category in ADDITIONAL_TAM_QUESTIONS.keys():
@@ -103,6 +117,11 @@ def add_custom_questions_categories():
     
     return additional_custom_questions_categories
 
+'''
+The add_custom_questions function appends to the CUSTOM_QUESTIONS dictionary a tuple with the custom_question
+and the wording (positive/negative) indicating whether the question is positively or negatively worded.
+The selected_category String argument is the key of CUSTOM_QUESTIONS in which the question will be added on.
+'''
 def add_custom_questions(custom_question: str, selected_category: str, selected_wording: str):
 
     if custom_question.strip() == "":

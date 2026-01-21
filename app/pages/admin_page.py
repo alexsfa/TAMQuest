@@ -4,11 +4,7 @@ import html, re
 from pprint import pprint, pformat
 from datetime import datetime
 
-from database.questionnaires import Questionnaires
-from database.questions import Questions
-from database.likert_scales import Likert_scales
-from database.likert_scale_options import Likert_scale_options
-from database.profiles import Profiles
+from app import questionnaires_repo, questions_repo, likert_scales_repo, likert_scale_options_repo, profiles_repo, client
 
 from services.questionnaire_services import submit_questionnaire
 
@@ -21,13 +17,6 @@ from utils.components import create_questionnaire_card, create_profile_card, pre
 from utils.redirections import redirect_to_respond_page, redirect_to_results_page
 
 current_page = "admin_page"
-
-client = supabase_client.get_client()
-questionnaires_repo = Questionnaires(client)
-questions_repo = Questions(client)
-likert_scales_repo = Likert_scales(client)
-likert_scale_options_repo = Likert_scale_options(client)
-profiles_repo = Profiles(client)
 
 additional_question_configs = [
     ("Technology support questions", "Technology Support"),

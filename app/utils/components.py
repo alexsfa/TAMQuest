@@ -19,6 +19,10 @@ DEFAULT_LIKERT_SCALE = [
     "Strongly agree"
 ]
 
+'''
+The format_time function normalizes and formats a ISO-8601 timestamp into
+a readable date/time string
+'''
 def format_time(timestamp: str):
     timestamp = re.sub(
             r"\.(\d+)(?=[+-])",
@@ -28,7 +32,12 @@ def format_time(timestamp: str):
     dt = datetime.fromisoformat(timestamp)
     return dt.strftime("%Y-%m-%d %H:%M:%S %Z")
 
+'''
+The create_questionnaire_card function retrieves a questionnaire's data as an argument
+and presents it in a card that has been styled by HTML/CSS.
 
+The card is being rendered directly into the app's UI.
+'''
 def create_questionnaire_card(questionnaire: dict):
     
     title_safe = html.escape(questionnaire['title'])
@@ -54,6 +63,13 @@ def create_questionnaire_card(questionnaire: dict):
                 </article>
                 """, unsafe_allow_html=True)
 
+
+'''
+The create_response_card function retrieves the data of a response and its respondent
+and presents it in a card that has been styled by HTML/CSS.
+
+The card is being rendered directly into the app's UI.
+'''
 def create_response_card(response: dict, response_profile_name: str | None = None):
 
     title_safe = html.escape(response['questionnaires']['title'])
@@ -82,6 +98,12 @@ def create_response_card(response: dict, response_profile_name: str | None = Non
                 </article>
                 """, unsafe_allow_html=True)
 
+'''
+The create_profile_card function retrieves a profile's data as an argument
+and presents it in a card that has been styled by HTML/CSS.
+
+The card is being rendered directly into the app's UI.
+'''
 def create_profile_card(profile: dict):
     user_name = html.escape(profile["full_name"])
     user_birthdate = html.escape(profile["birthdate"])
@@ -102,11 +124,22 @@ def create_profile_card(profile: dict):
                 </article>
                 """, unsafe_allow_html=True)
 
+'''
+The set_naswer_layout renders a response answer layout directly into the app's UI
+by displaying the number and the text of its corresponding question and the selected
+likert scale answer's label.
+'''
 def set_answer_layout(answer: dict):
     st.markdown(f"</br></br>", unsafe_allow_html=True)
     st.markdown(f"<h5 style='margin-bottom:2px'>{answer['questions']['position']}. {answer['questions']['question_text']}</h5>", unsafe_allow_html=True)
     st.markdown(f"<h5 style='margin-bottom:'>Answer: {answer['likert_scale_options']['label']}", unsafe_allow_html=True)
 
+
+'''
+The set_response_ui function sets the UI form that a user can respond to the questions of a questionnaire.
+If there is a draft of a user's response, a list of the draft's answers gets inserted so the corresponding 
+radio buttons will be already selected.
+'''
 def set_response_ui(questions, likert_scale_options:list, draft_answers: list | None = None):
 
     if draft_answers is None:
@@ -145,15 +178,20 @@ def set_response_ui(questions, likert_scale_options:list, draft_answers: list | 
             )
         st.markdown(f"</br></br>", unsafe_allow_html=True)
 
+'''
+The function preview_questionnaire prints into the app's UI all the TAM essential questions,
+all the additional questions of the selected by the user categories and the user's custom questions
+for the questionnaire.
+'''
 def preview_questionnaire(app_name: str, custom_questions: dict):
     if app_name.strip() == "":
         st.warning("Please enter the app's name.")
         return
 
-    questions = generate_tam_questions(ESSENTIAL_TAM_QUESTIONS, app_name)
+    questions = generate_tam_questions(app_name)
 
     if "add_questions" in st.session_state and st.session_state["add_questions"]:
-        questions.update(generate_additional_tam_questions(ADDITIONAL_TAM_QUESTIONS, app_name))
+        questions.update(generate_additional_tam_questions(app_name))
 
     for category, question in custom_questions.items():
         if category in questions.keys():
@@ -162,7 +200,6 @@ def preview_questionnaire(app_name: str, custom_questions: dict):
 
     for category, questions in questions.items():
         st.markdown(f"#### **{category}**" + "\n".join(f"\n{i+1} - {q}" for i, q in enumerate(questions)))
-
 
 
 '''
@@ -210,7 +247,12 @@ def create_responses_management_ui(response: dict, redirection_button: str, call
             else:
                 st.rerun()
 
-
+'''
+The likert_scale_customization_ui renders a form which allows the user to customize the likert scale
+that will be used for the questionnaire that he creates.
+The form allows the user to increase or decrease the number of the likert scale's levels and also provides
+the choice of a default likert scale usage.
+'''
 def likert_scale_customization_ui():
     ls_customization_container = st.container(border=True)
 

@@ -2,12 +2,7 @@ import streamlit as st
 import re
 from datetime import datetime
 
-from database.questionnaires import Questionnaires
-from database.questions import Questions
-from database.responses import Responses
-from database.answers import Answers
-from database.likert_scales import Likert_scales
-from database.likert_scale_options import Likert_scale_options
+from app import client, questionnaires_repo, questions_repo, responses_repo, likert_scales_repo, likert_scale_options_repo, answers_repo
 
 from services.response_services import  submit_response
 from services.questionnaire_services import retrieve_questionnaire, retrieve_questionnaire_by_response
@@ -16,14 +11,6 @@ from utils import supabase_client
 from utils.menu import menu
 from utils.logger_config import logger
 from utils.components import format_time, set_response_ui
-
-client = supabase_client.get_client()
-questionnaires_repo = Questionnaires(client)
-questions_repo = Questions(client)
-responses_repo = Responses(client)
-likert_scales_repo = Likert_scales(client)
-likert_scale_options_repo = Likert_scale_options(client)
-answers_repo = Answers(client)
 
 if __name__ == "__main__":
     

@@ -2,26 +2,12 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from database.questionnaires import Questionnaires
-from database.likert_scales import Likert_scales
-from database.likert_scale_options import Likert_scale_options
-from database.questions import Questions
-from database.responses import Responses
-from database.answers import Answers
+from app import client, questionnaires_repo, responses_repo, questions_repo, answers_repo, likert_scales_repo, likert_scale_options_repo
 
 from utils import supabase_client 
 from utils.menu import menu
 from utils.questionnaire_scoring import (tam_score, count_category_answers_by_label, construct_scores, pivot_constructs, calc_spearman_correlation, 
 plot_spearman_by_response, plot_pvalue_rows)
-
-client = supabase_client.get_client()
-
-questionnaires_repo = Questionnaires(client)
-responses_repo = Responses(client)
-questions_repo = Questions(client)
-answers_repo = Answers(client)
-likert_scales_repo = Likert_scales(client)
-likert_scale_options_repo = Likert_scale_options(client)
 
 basic_constructs = ["Perceived Usefulness", "Perceived Ease of Use", "Attitude", "Behavioral Intention"]
 
