@@ -30,7 +30,7 @@ ESSENTIAL_TAM_QUESTIONS = {
 
 # Questions for each additional TAM construct.
 ADDITIONAL_TAM_QUESTIONS = {
-    "Technology Support": [ 
+    "Technology Support": [
         "{app_name} technical problem hotline is available at any time.",
         "{app_name} technical team offers good technical support.",
     ],
@@ -40,7 +40,10 @@ ADDITIONAL_TAM_QUESTIONS = {
     ],
     "Computer Anxiety": [
         "I feel apprehensive about using {app_name}.",
-        "I am afraid of making a mistake using {app_name} that I cannot correct.",
+        (
+            "I am afraid of making a mistake using {app_name}"
+            "that I cannot correct."
+        ),
     ],
     "Computer Self-Efficacy": [
         "I expect to become proficient in using {app_name}.",
@@ -48,7 +51,10 @@ ADDITIONAL_TAM_QUESTIONS = {
     ],
     "Compatibility": [
         "Using {app_name} is appropriate for my lifestyle.",
-        "Using {app_name} is appropriate for the completion of my related tasks.",
+        (
+            "Using {app_name} is appropriate for the completion"
+            "of my related tasks."
+        ),
     ],
     "Information Quality": [
         "Information of {app_name} is accurate and relevant.",
@@ -63,7 +69,10 @@ ADDITIONAL_TAM_QUESTIONS = {
         "I believe the use of {app_name} is time consuming.",
     ],
     "Subjective Norm": [
-        "People who are important to me would think that I should use {app_name}.",
+        (
+            "People who are important to me would think that I should "
+            "use {app_name}."
+        ),
         "Using {app_name} would make me prestigious among my peers.",
     ],
     "Behavioral Control": [
@@ -78,10 +87,14 @@ ADDITIONAL_TAM_QUESTIONS = {
 
 CUSTOM_QUESTIONS = {}
 
+
 '''
-The generate_tam_questions replaces the app_name placeholder with the String that takes as an argument
-for all the essential TAM questions and returns the resulted dictionary.
+The generate_tam_questions replaces the app_name placeholder
+with the String that takes as an argument for all the essential TAM questions
+and returns the resulted dictionary.
 '''
+
+
 def generate_tam_questions(app_name: str):
     formatted_questions = {}
     for category, questions in ESSENTIAL_TAM_QUESTIONS.items():
@@ -91,10 +104,14 @@ def generate_tam_questions(app_name: str):
 
     return formatted_questions
 
+
 '''
-The generate_additional_tam_questions replaces the app_name placeholder with the String that takes as an argument
-for all the additional TAM questions of each selected category and returns the resulted dictionary.
+The generate_additional_tam_questions replaces the app_name placeholder
+with the String that takes as an argument for all the additional TAM questions
+of each selected category and returns the resulted dictionary.
 '''
+
+
 def generate_additional_tam_questions(app_name: str):
     formatted_questions = {}
     for category, questions in ADDITIONAL_TAM_QUESTIONS.items():
@@ -105,38 +122,59 @@ def generate_additional_tam_questions(app_name: str):
 
     return formatted_questions
 
+
 '''
-The add_custom_questions_categories adds all the questions' categories that have been selected
-on a list with the categories available for the user to add a custom question on.
+The add_custom_questions_categories adds all the questions' categories
+that have been selected on a list with the categories available
+for the user to add a custom question on.
 '''
+
+
 def add_custom_questions_categories():
     additional_custom_questions_categories = []
     for category in ADDITIONAL_TAM_QUESTIONS.keys():
         if category in st.session_state and st.session_state[category]:
             additional_custom_questions_categories.append(category)
-    
+
     return additional_custom_questions_categories
 
+
 '''
-The add_custom_questions function appends to the CUSTOM_QUESTIONS dictionary a tuple with the custom_question
-and the wording (positive/negative) indicating whether the question is positively or negatively worded.
-The selected_category String argument is the key of CUSTOM_QUESTIONS in which the question will be added on.
+The add_custom_questions function appends to the CUSTOM_QUESTIONS dictionary
+a tuple with the custom_question and the wording (positive/negative)
+indicating whether the question is positively or negatively worded.
+
+The selected_category String argument is the key of CUSTOM_QUESTIONS
+in which the question will be added on.
 '''
-def add_custom_questions(custom_question: str, selected_category: str, selected_wording: str):
+
+
+def add_custom_questions(
+    custom_question: str,
+    selected_category: str,
+    selected_wording: str
+):
 
     if custom_question.strip() == "":
         st.warning("Please enter a question.")
         return
 
     negative_wording = False
-    if selected_wording is "Negative":
+    if selected_wording == "Negative":
         negative_wording = True
 
     if selected_category in CUSTOM_QUESTIONS:
-        CUSTOM_QUESTIONS[selected_category].append((custom_question, negative_wording))
+        CUSTOM_QUESTIONS[selected_category].append(
+            (
+                custom_question,
+                negative_wording
+            )
+        )
+
     else:
-        CUSTOM_QUESTIONS[selected_category] = [(custom_question, negative_wording)]
-
-
-
-
+        CUSTOM_QUESTIONS[selected_category] = [
+            (
+                custom_question,
+                negative_wording
+            )
+        ]

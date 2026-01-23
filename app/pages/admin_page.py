@@ -1,20 +1,36 @@
+# flake8: noqa: E501
 import streamlit as st
-import uuid
-import html, re
-from pprint import pprint, pformat
-from datetime import datetime
 
-from app import questionnaires_repo, questions_repo, likert_scales_repo, likert_scale_options_repo, profiles_repo, client
+from app import (
+    questionnaires_repo,
+    questions_repo,
+    likert_scales_repo,
+    likert_scale_options_repo,
+    profiles_repo,
+    client
+)
 
 from services.questionnaire_services import submit_questionnaire
 
-from utils.generate_questionnaires import (generate_tam_questions, generate_additional_tam_questions, add_custom_questions, 
-ESSENTIAL_TAM_QUESTIONS, ADDITIONAL_TAM_QUESTIONS, CUSTOM_QUESTIONS, add_custom_questions_categories)
-from utils import supabase_client 
+from utils.generate_questionnaires import (
+    add_custom_questions,
+    ESSENTIAL_TAM_QUESTIONS,
+    CUSTOM_QUESTIONS,
+    add_custom_questions_categories
+)
+
 from utils.menu import menu
 from utils.logger_config import logger
-from utils.components import create_questionnaire_card, create_profile_card, preview_questionnaire, likert_scale_customization_ui
-from utils.redirections import redirect_to_respond_page, redirect_to_results_page
+from utils.components import (
+    create_questionnaire_card,
+    create_profile_card,
+    preview_questionnaire,
+    likert_scale_customization_ui
+)
+from utils.redirections import (
+    redirect_to_respond_page,
+    redirect_to_results_page
+)
 
 current_page = "admin_page"
 
@@ -36,6 +52,13 @@ custom_questions = []
 
 radio_options = ["Yes", "No"]
 
+
+
+# The restart_questionnaire_ui_state disables all the widgets
+# that are related on the form
+# which allow the admin to create a new questionnaire
+
+
 def restart_questionnaire_ui_state():
     st.session_state.create_questionnaire = False
     st.session_state.add_questions = False
@@ -43,7 +66,8 @@ def restart_questionnaire_ui_state():
     st.session_state.show_preview = False
     st.session_state["questionnaire_likert_scale_levels"] = 2
     CUSTOM_QUESTIONS.clear()
-    
+
+
 if __name__ == "__main__":
 
     menu(client)
@@ -51,18 +75,30 @@ if __name__ == "__main__":
         restart_questionnaire_ui_state()
         st.session_state.last_page = current_page
 
-    st.title("Welcome to the admin page") 
+    st.title("Welcome to the admin page")
 
     if st.button("Create new questionnaire"):
-        st.session_state.create_questionnaire = not st.session_state.create_questionnaire
+        st.session_state.create_questionnaire = (
+            not st.session_state.create_questionnaire
+        )
 
     if st.session_state.create_questionnaire:
         if st.session_state["user_id"] is None:
-            st.error("You have to create a profile before submitting a questionnaire")
+            st.error(
+                "You have to create a profile before"
+                "submitting a questionnaire"
+            )
         else:
-            st.text_input("Subject of questionnaire (app's name)", key="app_name")
+            st.text_input(
+                "Subject of questionnaire (app's name)",
+                key="app_name"
+            )
 
-            st.text_area("Enter details about the questionnaire", height=150, key="q_details")
+            st.text_area(
+                "Enter details about the questionnaire",
+                height=150,
+                key="q_details"
+            )
 
             if "add_questions" not in st.session_state:
                 st.session_state.add_questions = False
@@ -76,31 +112,39 @@ if __name__ == "__main__":
             button_1, button_2, button_3 = st.columns(3)
             with button_1:
                 if st.button("Add additional questions"):
-                    st.session_state.add_questions = not st.session_state.add_questions
+                    st.session_state.add_questions = (
+                        not st.session_state.add_questions
+                    )
 
             with button_2:
                 if st.button("Add your own question"):
-                    st.session_state.add_custom_question = not st.session_state.add_custom_question
+                    st.session_state.add_custom_question = (
+                        not st.session_state.add_custom_question
+                    )
 
             with button_3:
                 if st.button("Preview Questionnaire"):
-                    st.session_state.show_preview = not st.session_state.show_preview
+                    st.session_state.show_preview = (
+                        not st.session_state.show_preview
+                    )
 
-        
             if st.session_state.add_questions:
-                additional_questions_container = st.container(border=True)
+                additional_questions_container = (
+                    st.container(border=True)
+                )
                 with additional_questions_container:
                     st.write("### **Add question categories**")
                     cols = st.columns(2)
 
-                    for i, (label, key) in enumerate(additional_question_configs):
+                    for i, (label, key) in enumerate(
+                        additional_question_configs
+                    ):
                         col = cols[i % 2]
                         col.checkbox(label, key=key)
 
-            
             selected_category = None
             custom_questions = {}
-            
+
             if st.session_state.add_custom_question:
                 custom_question_container = st.container(border=True)
                 with custom_question_container:
@@ -142,18 +186,32 @@ if __name__ == "__main__":
                                 with added_custom_questions_container:
                                     st.write("No custom questions added yet.")
 
-            
             if st.session_state.show_preview:
                 questionnaire_preview_container = st.container(border=True)
                 with questionnaire_preview_container:
                     st.write("### **Preview Questionnaire**")
-                    preview_questionnaire(st.session_state["app_name"], CUSTOM_QUESTIONS)
+                    preview_questionnaire(
+                        st.session_state["app_name"],
+                        CUSTOM_QUESTIONS
+                    )
 
             likert_scale_customization_ui()
 
             if st.button("Submit Questionnaire"):
                 submit_result = []
-                submit_result = submit_questionnaire(st.session_state["app_name"], st.session_state["q_details"], st.session_state["user_id"], questionnaires_repo, questions_repo, likert_scales_repo, likert_scale_options_repo, logger, CUSTOM_QUESTIONS)
+                submit_result = (
+                    submit_questionnaire(
+                        st.session_state["app_name"],
+                        st.session_state["q_details"],
+                        st.session_state["user_id"],
+                        questionnaires_repo,
+                        questions_repo,
+                        likert_scales_repo,
+                        likert_scale_options_repo,
+                        logger,
+                        CUSTOM_QUESTIONS
+                    )
+                )
                 if (submit_result is None) or (not all(submit_result)):
                     pass
                 else:
@@ -165,24 +223,30 @@ if __name__ == "__main__":
 
     qs = None
     try:
-        qs = questionnaires_repo.get_all_questionnaires_without_admin_response(st.session_state["user_id"])
+        qs = (
+            questionnaires_repo.get_all_questionnaires_with_admin_response(
+                st.session_state["user_id"]
+            )
+        )
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
 
     if qs is None:
-        st.error(f"Error during the retrieval of questionnaires")
+        st.error("Error during the retrieval of questionnaires")
     elif len(qs.data) == 0:
         st.write("There are no questionnaires available for response")
     else:
         questionnaire_list = qs.data
 
         for item in questionnaire_list:
-            
-            col1, col2, col3= st.columns([5,1,1])
+
+            col1, col2, col3 = st.columns([5, 1, 1])
 
             with col1:
                 create_questionnaire_card(item)
 
+            # if a questionnaire has no response from the admin,
+            # a 'Respond' button gets rendered
             if len(item["responses"]) == 0:
 
                 with col3:
@@ -201,14 +265,20 @@ if __name__ == "__main__":
                     if st.button("Delete", key=delete_key):
                         response = None
                         try:
-                            response = questionnaires_repo.delete_questionnaire_by_id(item['id'])
+                            response = (
+                                questionnaires_repo.delete_questionnaire_by_id(
+                                    item['id']
+                                )
+                            )
                             st.rerun()
                         except RuntimeError as e:
                             logger.error(f"Database error: {e}")
 
                         if response is None:
-                            st.error("Error during the delete of the questionnaire")
-        
+                            st.error(
+                                "Error during the delete of the questionnaire"
+                            )
+
                     st.write("\n")
             else:
                 with col2:
@@ -222,14 +292,20 @@ if __name__ == "__main__":
                     if st.button("Delete", key=delete_key):
                         response = None
                         try:
-                            response = questionnaires_repo.delete_questionnaire_by_id(item['id'])
+                            response = (
+                                questionnaires_repo.delete_questionnaire_by_id(
+                                    item['id']
+                                )
+                            )
                             st.rerun()
                         except RuntimeError as e:
                             logger.error(f"Database error: {e}")
 
                         if response is None:
-                            st.error("Error during the delete of the questionnaire")
-        
+                            st.error(
+                                "Error during the delete of the questionnaire"
+                            )
+
                 st.write("\n")
 
     st.divider()
@@ -241,7 +317,7 @@ if __name__ == "__main__":
         profiles = profiles_repo.get_all_profiles(st.session_state["user_id"])
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
-        
+
     if profiles is None:
         st.error("Error during the profiles list retrieval")
     elif len(profiles.data) == 0:
@@ -257,7 +333,11 @@ if __name__ == "__main__":
                 if st.button("Delete", key=delete_key):
                     response = None
                     try:
-                        response = profiles_repo.delete_profile_by_id(profile['id'])
+                        response = (
+                            profiles_repo.delete_profile_by_id(
+                                profile['id']
+                            )
+                        )
                         st.rerun()
                     except RuntimeError as e:
                         logger.error(f"Database error: {e}")
@@ -267,4 +347,3 @@ if __name__ == "__main__":
                 st.markdown("</div>", unsafe_allow_html=True)
 
             message_box = st.empty()
-

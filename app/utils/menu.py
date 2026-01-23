@@ -13,10 +13,13 @@ MENU_CONFIG = {
     ]
 }
 
+
 '''
 The sign_out function calls logout_user and deletes all the keys
 that store the the user's session info and the ui state
 '''
+
+
 def sign_out(supabase_client):
     try:
         supabase_client.auth.sign_out()
@@ -45,21 +48,29 @@ def sign_out(supabase_client):
             del st.session_state[key]
 
     st.switch_page("pages/login_page.py")
-    
+
+
 '''
-The authenticated_menu() function renders the sidebar menu based on the user's role
+The authenticated_menu() function renders the
+sidebar menu based on the user's role
 '''
+
+
 def authenticated_menu(supabase_client, role: str):
     role = st.session_state.role
     for item in MENU_CONFIG.get(role, []):
         st.sidebar.page_link(item["page"], label=item["label"])
     st.sidebar.button("Sign out", on_click=sign_out, args=(supabase_client,))
 
+
 '''
 The menu() function checks if user is authenticated.
 The unauthenticated users get redirect to the login page.
-For the authenticated users, the function calls the authenticated_menu function.
+For the authenticated users, the function calls the
+authenticated_menu function.
 '''
+
+
 def menu(supabase_client):
     session = supabase_client.auth.get_session()
 
@@ -69,5 +80,5 @@ def menu(supabase_client):
 
     user_data = session.user
     role = user_data.user_metadata.get("role", None)
-    
+
     authenticated_menu(supabase_client, role)

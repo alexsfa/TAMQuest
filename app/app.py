@@ -1,7 +1,4 @@
 import streamlit as st
-import re
-import html
-from datetime import datetime
 from dotenv import load_dotenv
 
 from database.questionnaires import Questionnaires
@@ -12,8 +9,11 @@ from database.answers import Answers
 from database.responses import Responses
 from database.profiles import Profiles
 
-from utils import supabase_client 
-from utils.components import create_questionnaire_card, create_response_card, create_responses_management_ui
+from utils import supabase_client
+from utils.components import (
+    create_questionnaire_card,
+    create_responses_management_ui
+)
 from utils.menu import menu
 from utils.redirections import redirect_to_respond_page, redirect_to_view_page
 from utils.logger_config import logger
@@ -32,6 +32,10 @@ likert_scale_options_repo = Likert_scale_options(client)
 responses_repo = Responses(client)
 profiles_repo = Profiles(client)
 
+
+# The init_ui_state function initializes all the primary UI widgets that
+# control the state of the UI
+
 def init_ui_state():
     state_values = {
         "create_questionnaire": False,
@@ -48,28 +52,31 @@ def init_ui_state():
     for key, value in state_values.items():
         st.session_state[key] = value
 
-# -----------------------------------------
-# Below starts the UI of the app
-# -----------------------------------------
 
 if __name__ == "__main__":
-    
-    # if the user visits for the first time, we initialize the ui state.
+
+    # if the user visits for the first time,
+    # we initialize the ui state.
     if "last_page" not in st.session_state:
         init_ui_state()
         st.session_state.last_page = current_page
 
-    # renders the menu for authenticated users or redirects to login page for unauthenticated
+    # renders the menu for authenticated users or
+    # redirects to login page for unauthenticated
     menu(client)
     st.session_state.last_page = current_page
 
     # checks if the user has already created a profile
     user_profile = None
     try:
-        user_profile = profiles_repo.get_profile_by_id(st.session_state["user_id"])
+        user_profile = (
+            profiles_repo.get_profile_by_id(st.session_state["user_id"])
+        )
     except RuntimeError as e:
         logger.error(f"Database error: {e}")
 
+    # If there is no profile for the logged in user,
+    # the app redirects the user to the create_profile_page
     if user_profile is None:
         st.error("Error during your profile retrieval")
         st.stop()
@@ -80,7 +87,8 @@ if __name__ == "__main__":
 
     st.title("Welcome to TAMQuest")
 
-    # Admin's main page shows all the responses that have been submitted    
+    # Admin's main page shows all the responses
+    # that have been submitted
     if st.session_state["role"] == 'admin':
         st.write("## User's responses")
         questionnaires = None
@@ -89,14 +97,23 @@ if __name__ == "__main__":
         except RuntimeError as e:
             logger.error(f"Database error: {e}")
 
+        # The app makes a selectbox with all
+        # the questionnaires' title available
         available_filter_actions = ["All"]
-        available_questionnaires = list({item["title"] for item in questionnaires.data})
+        available_questionnaires = list(
+            {item["title"] for item in questionnaires.data}
+        )
         for q_title in available_questionnaires:
             available_filter_actions.append(q_title)
 
-        filter_title = st.selectbox("Filter by questionnaire", available_filter_actions)
+        filter_title = st.selectbox(
+            "Filter by questionnaire",
+            available_filter_actions
+        )
 
-        if filter_title is "All":
+        # If the admin does not specify a questionnaire title,
+        # the app retrieves the responses of all questionnaires
+        if filter_title == "All":
 
             try:
                 responses = responses_repo.get_all_responses()
@@ -110,10 +127,21 @@ if __name__ == "__main__":
             else:
                 response_list = responses.data
                 for response in response_list:
-                    create_responses_management_ui(response, "View",  redirect_to_view_page)
+                    create_responses_management_ui(
+                        response,
+                        "View",
+                        redirect_to_view_page
+                    )
+
+        # If the admin specify a questionnaire title,
+        # the app retrieves the responses of the corresponding questionnaire
         else:
             try:
-                responses_by_q_title = responses_repo.get_responses_by_questionnaire_title(filter_title)
+                responses_by_q_title = (
+                    responses_repo.get_responses_by_questionnaire_title(
+                        filter_title
+                    )
+                )
             except RuntimeError as e:
                 logger.error(f"Database error: {e}")
 
@@ -122,41 +150,43 @@ if __name__ == "__main__":
             else:
                 response_list = responses_by_q_title.data
                 for response in response_list:
-                    create_responses_management_ui(response, "View",  redirect_to_view_page)
+                    create_responses_management_ui(
+                        response,
+                        "View",
+                        redirect_to_view_page
+                    )
+
+    # User's main page shows all the questionnaires
+    # that the user has not responded yet.
     else:
-        
+
         qs = None
         try:
-            qs = questionnaires_repo.get_questionnaires_without_user_response(st.session_state["user_id"])
+            qs = (
+                questionnaires_repo.get_questionnaires_without_user_response(
+                    st.session_state["user_id"]
+                )
+            )
         except RuntimeError as e:
             logger.error(f"Database error: {e}")
-        
+
         if qs is None:
-            st.error(f"Error during the questionnaires retrieval")
+            st.error("Error during the questionnaires retrieval")
         elif len(qs.data) == 0:
             st.write("There are no questionnaires available for response")
         else:
             questionnaire_list = qs.data
 
             for item in questionnaire_list:
-                
+
                 message_box = st.empty()
 
-                col1, col2 = st.columns([4,1])
-        
+                col1, col2 = st.columns([4, 1])
+
                 with col1:
                     create_questionnaire_card(item)
-                
+
                 with col2:
                     respond_key = f"respond_{item['id']}"
                     if st.button("Respond", key=respond_key):
                         redirect_to_respond_page(item['id'])
-
-
-                
-
-
-        
-
-
-                

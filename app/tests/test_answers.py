@@ -2,10 +2,12 @@ import pytest
 from unittest.mock import MagicMock
 from database.answers import Answers
 
+
 class MockSupabaseResponse:
     def __init__(self, data=None, error=None):
         self.data = data
         self.error = error
+
 
 @pytest.fixture
 def supabase_client():
@@ -20,6 +22,7 @@ def supabase_client():
     client.table.return_value.upsert.return_value = query
 
     return client
+
 
 def test_get_answers_by_response_id(supabase_client):
     expected_data = [
@@ -43,6 +46,7 @@ def test_get_answers_by_response_id(supabase_client):
 
     assert result.data == expected_data
 
+
 def test_get_submitted_answers_by_questionnaire_id(supabase_client):
     expected_data = [
         {
@@ -64,12 +68,13 @@ def test_get_submitted_answers_by_questionnaire_id(supabase_client):
         .eq.return_value \
         .eq.return_value \
         .execute.return_value = MockSupabaseResponse(data=expected_data)
-    
+
     answers = Answers(supabase_client)
 
     result = answers.get_submitted_answers_by_questionnaire_id("q_123")
 
     assert result.data == expected_data
+
 
 def test_create_answers(supabase_client):
     input_answers = [
@@ -86,7 +91,7 @@ def test_create_answers(supabase_client):
             **input_answers[0],
         }
     ]
-        
+
     supabase_client.table.return_value \
         .insert.return_value \
         .execute.return_value = MockSupabaseResponse(data=inserted_data)
@@ -96,6 +101,7 @@ def test_create_answers(supabase_client):
     result = answers.create_answers(input_answers)
 
     assert result.data == inserted_data
+
 
 def test_update_answers(supabase_client):
     input_answers = [
@@ -112,7 +118,7 @@ def test_update_answers(supabase_client):
             **input_answers[0],
         }
     ]
-    
+
     supabase_client.table.return_value \
         .upsert.return_value \
         .execute.return_value = MockSupabaseResponse(data=updated_data)
@@ -122,6 +128,7 @@ def test_update_answers(supabase_client):
     result = answers.update_answers(input_answers)
 
     assert result.data == updated_data
+
 
 def test_get_answers_by_response_id_raises_runtime_error(supabase_client):
     supabase_client.table.return_value \
@@ -137,19 +144,23 @@ def test_get_answers_by_response_id_raises_runtime_error(supabase_client):
 
     assert "Failed to retrieve answers" in str(exc.value)
 
-def test_get_submitted_answers_by_questionnaire_id_raises_runtime_error(supabase_client):
+
+def test_get_submitted_answers_by_questionnaire_id_raises_runtime_error(
+    supabase_client
+):
     supabase_client.table.return_value \
         .select.return_value \
         .eq.return_value \
         .eq.return_value \
         .execute.side_effect = Exception("DB is down")
-    
+
     answers = Answers(supabase_client)
 
     with pytest.raises(RuntimeError) as exc:
         answers.get_submitted_answers_by_questionnaire_id("q_123")
 
     assert "Failed to retrieve answers" in str(exc.value)
+
 
 def test_create_answers_raises_runtime_error(supabase_client):
     supabase_client.table.return_value \
@@ -158,17 +169,17 @@ def test_create_answers_raises_runtime_error(supabase_client):
 
     answers = Answers(supabase_client)
 
-    
     with pytest.raises(RuntimeError) as exc:
         answers.create_answers([{"response_id": "res_123"}])
 
     assert "Failed to insert the answers" in str(exc.value)
 
+
 def test_update_answers_raises_runtime_error(supabase_client):
     supabase_client.table.return_value \
         .upsert.return_value \
         .execute.side_effect = Exception("DB down")
-    
+
     answers = Answers(supabase_client)
 
     with pytest.raises(RuntimeError) as exc:

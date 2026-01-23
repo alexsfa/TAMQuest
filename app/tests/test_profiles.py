@@ -8,6 +8,7 @@ class MockSupabaseResponse:
         self.data = data
         self.error = error
 
+
 @pytest.fixture
 def supabase_client():
     client = MagicMock()
@@ -24,9 +25,10 @@ def supabase_client():
 
     return client
 
+
 def test_get_all_profiles(supabase_client):
     expected_data = [
-        {   
+        {
             "id": "user_1",
             "full_name": "alex",
             "birthdate": "2001-01-28",
@@ -48,9 +50,10 @@ def test_get_all_profiles(supabase_client):
 
     assert result.data == expected_data
 
+
 def test_get_profile_by_id(supabase_client):
     expected_data = [
-        {   
+        {
             "id": "user_1",
             "full_name": "alex",
             "birthdate": "2001-01-28",
@@ -72,6 +75,7 @@ def test_get_profile_by_id(supabase_client):
 
     assert result.data == expected_data
 
+
 def test_create_profile(supabase_client):
     inserted_data = [
         {
@@ -89,7 +93,13 @@ def test_create_profile(supabase_client):
 
     profiles = Profiles(supabase_client)
 
-    result = profiles.create_profile("user_123", "alex", "2001-01-28", "Nikaia", "Greece")
+    result = profiles.create_profile(
+        "user_123",
+        "alex",
+        "2001-01-28",
+        "Nikaia",
+        "Greece"
+    )
 
     assert result.data == inserted_data
 
@@ -135,6 +145,7 @@ def test_update_profile_by_id(supabase_client):
 
     assert result.data == updated_data
 
+
 def test_update_profile_by_id_uses_old_value_if_new_missing(supabase_client):
 
     old_profile = {
@@ -174,6 +185,7 @@ def test_update_profile_by_id_uses_old_value_if_new_missing(supabase_client):
 
     assert result.data == updated_data
 
+
 def test_delete_profile_by_id(supabase_client):
     deleted_data = [{"id": "user_123"}]
 
@@ -187,6 +199,7 @@ def test_delete_profile_by_id(supabase_client):
 
     assert result.data == deleted_data
 
+
 def test_get_all_profiles_raises_runtime_error(supabase_client):
     supabase_client.table.return_value \
         .select.return_value \
@@ -199,7 +212,8 @@ def test_get_all_profiles_raises_runtime_error(supabase_client):
         profiles.get_all_profiles("admin_123")
 
     assert "Failed to retrieve profiles" in str(exc.value)
-        
+
+
 def test_get_profile_by_id_raises_runtime_error(supabase_client):
     supabase_client.table.return_value \
         .select.return_value \
@@ -213,17 +227,25 @@ def test_get_profile_by_id_raises_runtime_error(supabase_client):
 
     assert "Failed to retrieve profile" in str(exc.value)
 
+
 def test_create_profile_raises_runtime_error(supabase_client):
     supabase_client.table.return_value \
         .insert.return_value \
         .execute.side_effect = Exception("DB down")
-    
+
     profiles = Profiles(supabase_client)
 
     with pytest.raises(RuntimeError) as exc:
-        profiles.create_profile("user-123", "test_name", "1900-01-01", "test_city", "test_country")
+        profiles.create_profile(
+            "user-123",
+            "test_name",
+            "1900-01-01",
+            "test_city",
+            "test_country"
+        )
 
     assert "Failed to create profile" in str(exc.value)
+
 
 def test_update_profile_by_id_raises_runtime_error(supabase_client):
     supabase_client.table.return_value \
@@ -233,10 +255,20 @@ def test_update_profile_by_id_raises_runtime_error(supabase_client):
     profiles = Profiles(supabase_client)
 
     with pytest.raises(RuntimeError) as exc:
-        profiles.update_profile_by_id("user-123", "new_test_name", "2025-01-01", "new_test_city", "new_test_country",
-        "old_test_name", "1900-01-01", "old_test_city", "old_test_country")
+        profiles.update_profile_by_id(
+            "user-123",
+            "new_test_name",
+            "2025-01-01",
+            "new_test_city",
+            "new_test_country",
+            "old_test_name",
+            "1900-01-01",
+            "old_test_city",
+            "old_test_country"
+        )
 
     assert "Failed to update profile" in str(exc.value)
+
 
 def test_delete_profile_by_id_raises_runtime_error(supabase_client):
     supabase_client.table.return_value \
@@ -249,6 +281,3 @@ def test_delete_profile_by_id_raises_runtime_error(supabase_client):
         profiles.delete_profile_by_id("user-123")
 
     assert "Failed to delete profile" in str(exc.value)
-
-
-
