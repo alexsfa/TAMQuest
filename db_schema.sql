@@ -1,0 +1,219 @@
+
+-- Definition of database tables
+
+create table profiles (
+    id uuid primary key references auth.users(id),
+    full_name text,
+    birthdate date,
+    created_at default now(),
+    updated_at default now(),
+    city text,
+    country text
+);
+
+create table questionnaires (
+    id uuid primary key default gen_random_uuid(),
+    title text not null,
+    details text,
+    created_at default now(),
+    created_by uuid references pubilc.profiles(id) ON DELETE CASCADE
+);
+
+create table questions (
+    id uuid primary key default gen_random_uuid(),
+    questionnaire_id uuid references public.questionnaires(id) ON DELETE CASCADE,
+    question_text text,
+    position integer,
+    category text,
+    is_custom bool default false,
+    is_negative bool default false
+);
+
+create table likert_scales (
+    id uuid primary key default gen_random_uuid(),
+    questionnaire_id uuid references public.questionnaires(id) ON DELETE CASCADE
+);
+
+create table likert_scale_options (
+    id uuid primary key default gen_random_uuid(),
+    likert_scale_id uuid references public.likert_scales(id) ON DELETE CASCADE,
+    value integer,
+    label text
+);
+
+create table responses (
+    id uuid primary key default gen_random_uuid(),
+    user_id uuid references pubilc.profiles(id) ON DELETE CASCADE,
+    questionnaire_id uuid references public.questionnaires(id) ON DELETE CASCADE,
+    submitted_at timestampz,
+    is_submitted bool default false
+);
+
+create table answers (
+    id uuid primary key default gen_random_uuid(),
+    response_id uuid references pubilc.responses(id) ON DELETE CASCADE,
+    question_id uuid references pubilc.questions(id),
+    selected_option uuid references public.likert_scale_options(id)
+);
+
+-- Activation of Row-Level Security for each table
+
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.questionnaires ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.questions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.likert_scales ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.likert_scale_options ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.responses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.answers ENABLE ROW LEVEL SECURITY;
+
+-- Definition of RLS Policies
+
+-- 'profiles' table RLS Policies
+
+CREATE POLICY "Admins can view all profiles"
+ON public.profiles
+FOR SELECT
+USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+
+CREATE POLICY "Admins can delete all profiles"
+ON public.profiles
+FOR DELETE
+USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+
+CREATE POLICY "Users can view their own profile"
+ON public.profiles
+FOR SELECT 
+USING (id = auth.uid());
+
+CREATE POLICY "Users can create their own profile"
+ON public.profiles
+FOR INSERT 
+WITH CHECK (id = auth.uid());
+
+CREATE POLICY "Users can update their own profile"
+ON public.profiles
+FOR UPDATE
+USING (id = auth.uid())
+WITH CHECK (id = auth.uid());
+
+CREATE POLICY "Users can delete their own profile"
+ON public.profiles
+FOR DELETE
+USING (id = auth.uid());
+
+-- 'questionnaires' table RLS Policies
+
+CREATE POLICY "Admins can create questionnaires"
+ON public.questionnaires
+FOR INSERT 
+WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+
+CREATE POLICY "Admins can delete questionnaires"
+ON public.questionnaires
+FOR DELETE
+USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+
+CREATE POLICY "Users can view questionnaires"
+ON public.questionnaires
+FOR SELECT 
+USING (id = auth.uid());
+
+-- 'questions' table RLS Policies
+
+CREATE POLICY "Admins can insert questions"
+ON public.questions
+FOR INSERT 
+WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+
+CREATE POLICY "Users can view questions"
+ON public.questions
+FOR SELECT 
+USING (id = auth.uid());
+
+-- 'likert_scales' table RLS Policies
+
+CREATE POLICY "Admins can insert Likert scales"
+ON public.likert_scales
+FOR INSERT 
+WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+
+CREATE POLICY "Users can view Likert scales"
+ON public.likert_scales
+FOR SELECT 
+USING (id = auth.uid());
+
+-- 'likert_scale_options' table RLS Policies
+
+CREATE POLICY "Admins can insert Likert scale options"
+ON public.likert_scale_options
+FOR INSERT 
+WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+
+CREATE POLICY "Users can view Likert scales' options"
+ON public.likert_scale_options
+FOR SELECT 
+USING (id = auth.uid());
+
+-- 'responses' table RLS Policies
+
+CREATE POLICY "Admins can view all responses"
+ON public.responses
+FOR SELECT
+USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+
+CREATE POLICY "Admins can delete all responses"
+ON public.responses
+FOR DELETE
+USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+
+CREATE POLICY "Users can view their own responses"
+ON public.responses
+FOR SELECT 
+USING (id = auth.uid());
+
+CREATE POLICY "Users can submit their own responses"
+ON public.responses
+FOR INSERT 
+WITH CHECK (id = auth.uid());
+
+CREATE POLICY "Users can update their own drafts"
+ON public.responses
+FOR UPDATE
+USING (id = auth.uid() AND is_submitted = false)
+WITH CHECK (id = auth.uid());
+
+CREATE POLICY "Users can delete their own responses"
+ON public.responses
+FOR DELETE
+USING (id = auth.uid());
+
+-- 'answers' table RLS Policies
+
+CREATE POLICY "Admins can view all answers"
+ON public.answers
+FOR SELECT
+USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+
+CREATE POLICY "Users can view their own answers"
+ON public.answers
+FOR INSERT 
+USING (id = auth.uid());
+
+CREATE POLICY "Users can insert their own answers"
+ON public.answers
+FOR INSERT 
+WITH CHECK (id = auth.uid());
+
+CREATE POLICY "Users can update their own answers"
+ON public.answers
+FOR UPDATE
+USING (id = auth.uid())
+WITH CHECK (id = auth.uid());
+
+
+
+
+
+
+
+
