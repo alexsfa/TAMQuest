@@ -1,0 +1,8 @@
+FROM nginx:alpine
+
+COPY ./proxy/default_nginx.conf.template /etc/nginx/conf.d/default.conf.template
+COPY ./proxy/api-gateway-entrypoint.sh /api-gateway-entrypoint.sh
+
+RUN chmod +x /api-gateway-entrypoint.sh
+
+ENTRYPOINT ["/api-gateway-entrypoint.sh"]

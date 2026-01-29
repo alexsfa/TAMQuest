@@ -1,22 +1,28 @@
 services:
 
   api-gateway:
-    image: nginx:alpine
+    build:
+      context: .
+      dockerfile: ./Dockerfile.api-gateway
     volumes:
-      - ./proxy/default_nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ssl_certificate:/etc/letsencrypt:ro
     ports:
       - "80:80"
       - "443:443"
+    environment:
+      DOMAIN_NAME: ${DOMAIN_NAME}
+      SSL_FULLCHAIN_LOCATION: ${SSL_FULLCHAIN_LOCATION}
+      SSL_PRIVKEY_LOCATION: ${SSL_PRIVKEY_LOCATION}
     depends_on:
       - app
+    entrypoint: ["/bin/sh", "/api-gateway-entrypoint.sh"]
 
   app:
     build: 
       context: .
       dockerfile: ./Dockerfile.app
     environment:
-      SUPABASE_URL: ${SUPABASE_URL:-https://tamquest.click}
+      SUPABASE_URL: ${SUPABASE_URL}
       SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
       ANON_KEY: ${ANON_KEY}
     ports:
@@ -30,9 +36,9 @@ services:
     restart: always
     environment:
       - CERT_EMAIL=${CERT_EMAIL}
-      - AWS_ACCESS_KEY_ID=${aws_access_key}
-      - AWS_SECRET_ACCESS_KEY=${aws_secret_access_key}
-      - AWS_DEFAULT_REGION=us-east-1
+      - DOMAIN_PROVIDER_ACCESS_KEY_ID=${domain_provider_access_key}
+      - DOMAIN_PROVIDER_SECRET_ACCESS_KEY=${domain_provider_secret_access_key}
+      - DOMAIN_PROVIDER_DEFAULT_REGION=us-east-1
     volumes:
       - ssl_certificate:/etc/letsencrypt
     entrypoint: 
