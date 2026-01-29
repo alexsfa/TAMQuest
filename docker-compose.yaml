@@ -38,7 +38,7 @@ services:
       - CERT_EMAIL=${CERT_EMAIL}
       - DOMAIN_PROVIDER_ACCESS_KEY_ID=${domain_provider_access_key}
       - DOMAIN_PROVIDER_SECRET_ACCESS_KEY=${domain_provider_secret_access_key}
-      - DOMAIN_PROVIDER_DEFAULT_REGION=us-east-1
+      - DOMAIN_PROVIDER_DEFAULT_REGION=u${domain_provider_region}
     volumes:
       - ssl_certificate:/etc/letsencrypt
     entrypoint: 
