@@ -116,7 +116,7 @@ USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
 CREATE POLICY "Users can view questionnaires"
 ON public.questionnaires
 FOR SELECT 
-USING (id = auth.uid());
+USING (auth.uid() IS NOT NULL);
 
 -- 'questions' table RLS Policies
 
@@ -128,7 +128,7 @@ WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
 CREATE POLICY "Users can view questions"
 ON public.questions
 FOR SELECT 
-USING (id = auth.uid());
+USING (auth.uid() IS NOT NULL);
 
 -- 'likert_scales' table RLS Policies
 
@@ -140,7 +140,7 @@ WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
 CREATE POLICY "Users can view Likert scales"
 ON public.likert_scales
 FOR SELECT 
-USING (id = auth.uid());
+USING (auth.uid() IS NOT NULL);
 
 -- 'likert_scale_options' table RLS Policies
 
@@ -152,7 +152,7 @@ WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
 CREATE POLICY "Users can view Likert scales' options"
 ON public.likert_scale_options
 FOR SELECT 
-USING (id = auth.uid());
+USING (auth.uid() IS NOT NULL);
 
 -- 'responses' table RLS Policies
 
@@ -169,23 +169,23 @@ USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
 CREATE POLICY "Users can view their own responses"
 ON public.responses
 FOR SELECT 
-USING (id = auth.uid());
+USING (user_id = auth.uid());
 
 CREATE POLICY "Users can submit their own responses"
 ON public.responses
 FOR INSERT 
-WITH CHECK (id = auth.uid());
+WITH CHECK (user_id = auth.uid());
 
 CREATE POLICY "Users can update their own drafts"
 ON public.responses
 FOR UPDATE
-USING (id = auth.uid() AND is_submitted = false)
-WITH CHECK (id = auth.uid());
+USING (user_id = auth.uid() AND is_submitted = false)
+WITH CHECK (user_id = auth.uid());
 
 CREATE POLICY "Users can delete their own responses"
 ON public.responses
 FOR DELETE
-USING (id = auth.uid());
+USING (user_id = auth.uid());
 
 -- 'answers' table RLS Policies
 
@@ -197,18 +197,47 @@ USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
 CREATE POLICY "Users can view their own answers"
 ON public.answers
 FOR INSERT 
-USING (id = auth.uid());
+USING (    
+    EXISTS (
+        SELECT 1
+        FROM public.responses r
+        WHERE r.id = answers.response_id
+          AND r.user_id = auth.uid()
+    ));
 
 CREATE POLICY "Users can insert their own answers"
 ON public.answers
 FOR INSERT 
-WITH CHECK (id = auth.uid());
+WITH CHECK (
+    EXISTS (
+        SELECT 1
+        FROM public.responses r
+        WHERE r.id = answers.response_id
+          AND r.user_id = auth.uid()
+    )
+);
 
 CREATE POLICY "Users can update their own answers"
 ON public.answers
 FOR UPDATE
-USING (id = auth.uid())
-WITH CHECK (id = auth.uid());
+USING  (
+    EXISTS (
+        SELECT 1
+        FROM public.responses r
+        WHERE r.id = answers.response_id
+          AND r.user_id = auth.uid()
+          AND r.is_submitted = false
+    )
+)
+WITH CHECK (
+    EXISTS (
+    SELECT 1
+    FROM public.responses r
+    WHERE r.id = answers.response_id
+        AND r.user_id = auth.uid()
+        AND r.is_submitted = false
+    )
+);
 
 
 
