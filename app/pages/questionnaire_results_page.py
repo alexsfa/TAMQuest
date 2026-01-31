@@ -222,7 +222,7 @@ if __name__ == "__main__":
     if count_of_responses < 10:
         st.write(
             "#### There are not enough responses"
-            "#### for a valid spearman analysis."
+            " for a valid Spearman analysis."
         )
     else:
 
@@ -303,7 +303,7 @@ if __name__ == "__main__":
         if len(available_pu_constructs) != 0:
             st.write(
                 "### Spearman statistic analysis between"
-                "### PU and secondary constructs"
+                " PU and secondary constructs"
             )
             pu_spearman_results = []
             for construct in available_pu_constructs:
@@ -325,7 +325,7 @@ if __name__ == "__main__":
         if len(available_peou_constructs) != 0:
             st.write(
                 "### Spearman statistic analysis between"
-                "### PEOU and secondary constructs"
+                "PEOU and secondary constructs"
             )
             peou_spearman_results = []
             for construct in available_peou_constructs:

@@ -88,7 +88,7 @@ if __name__ == "__main__":
         st.write(questionnaire_details)
 
     formatted_time = format_time(questionnaire_timestamp)
-    st.write(formatted_time)
+    st.write(f"Questionnaire created at:{formatted_time}")
 
     questions = current_questionnaire[1]
 

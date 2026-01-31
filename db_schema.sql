@@ -3,7 +3,7 @@
 
 create table profiles (
     id uuid primary key references auth.users(id),
-    full_name text,
+    full_name text not null,
     birthdate date,
     created_at default now(),
     updated_at default now(),
