@@ -36,9 +36,9 @@ services:
     restart: always
     environment:
       - CERT_EMAIL=${CERT_EMAIL}
-      - AWS_ACCESS_KEY_ID=${domain_provider_access_key}
-      - AWS_SECRET_ACCESS_KEY=${domain_provider_secret_access_key}
-      - AWS_DEFAULT_REGION=${domain_provider_region}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
     volumes:
       - ssl_certificate:/etc/letsencrypt
     entrypoint: 

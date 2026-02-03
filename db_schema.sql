@@ -16,7 +16,7 @@ create table questionnaires (
     title text not null,
     details text,
     created_at default now(),
-    created_by uuid references pubilc.profiles(id) ON DELETE CASCADE
+    created_by uuid references public.profiles(id) ON DELETE CASCADE
 );
 
 create table questions (
@@ -43,16 +43,16 @@ create table likert_scale_options (
 
 create table responses (
     id uuid primary key default gen_random_uuid(),
-    user_id uuid references pubilc.profiles(id) ON DELETE CASCADE,
+    user_id uuid references public.profiles(id) ON DELETE CASCADE,
     questionnaire_id uuid references public.questionnaires(id) ON DELETE CASCADE,
-    submitted_at timestampz,
+    submitted_at timestamptz,
     is_submitted bool default false
 );
 
 create table answers (
     id uuid primary key default gen_random_uuid(),
-    response_id uuid references pubilc.responses(id) ON DELETE CASCADE,
-    question_id uuid references pubilc.questions(id),
+    response_id uuid references public.responses(id) ON DELETE CASCADE,
+    question_id uuid references public.questions(id),
     selected_option uuid references public.likert_scale_options(id)
 );
 
@@ -195,15 +195,14 @@ FOR SELECT
 USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
 
 CREATE POLICY "Users can view their own answers"
-ON public.answers
-FOR INSERT 
-USING (    
+ON public.answers FOR SELECT
+USING (
     EXISTS (
-        SELECT 1
-        FROM public.responses r
-        WHERE r.id = answers.response_id
-          AND r.user_id = auth.uid()
-    ));
+        SELECT 1 FROM public.responses r
+        WHERE r.id = public.answers.response_id
+        AND r.user_id = auth.uid()
+    )
+);
 
 CREATE POLICY "Users can insert their own answers"
 ON public.answers
@@ -238,6 +237,54 @@ WITH CHECK (
         AND r.is_submitted = false
     )
 );
+
+CREATE OR REPLACE FUNCTION get_all_response_category_means(q_id_param UUID)
+RETURNS TABLE (
+    response_id UUID,
+    category TEXT,
+    mean_score NUMERIC
+) 
+LANGUAGE plpgsql
+SECURITY DEFINER -- Επιτρέπει τη χρήση από το API παρακάμπτοντας (αν χρειάζεται) το RLS
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        a.response_id, 
+        q.category, 
+        AVG(
+            CASE 
+                WHEN q.is_negative THEN 6 - lso.value 
+                ELSE lso.value 
+            END
+        )::NUMERIC AS mean_score 
+    FROM public.answers a 
+    JOIN public.questions q ON a.question_id = q.id 
+    JOIN public.likert_scale_options lso ON a.selected_option = lso.id 
+    JOIN public.responses r ON a.response_id = r.id 
+    WHERE q.questionnaire_id = q_id_param 
+      AND r.is_submitted = TRUE 
+    GROUP BY a.response_id, q.category;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION get_questionnaires_without_user_response(user_id_param UUID)
+RETURNS SETOF public.questionnaires
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT q.*
+    FROM public.questionnaires q
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM public.responses r
+        WHERE r.questionnaire_id = q.id
+          AND r.user_id = user_id_param
+    );
+END;
+$$;
 
 
 
