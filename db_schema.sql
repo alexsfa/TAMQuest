@@ -245,7 +245,7 @@ RETURNS TABLE (
     mean_score NUMERIC
 ) 
 LANGUAGE plpgsql
-SECURITY DEFINER -- Επιτρέπει τη χρήση από το API παρακάμπτοντας (αν χρειάζεται) το RLS
+SECURITY DEFINER
 AS $$
 BEGIN
     RETURN QUERY
