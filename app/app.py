@@ -15,7 +15,11 @@ from utils.components import (
     create_responses_management_ui
 )
 from utils.menu import menu
-from utils.redirections import redirect_to_respond_page, redirect_to_view_page
+from utils.redirections import (
+    redirect_to_respond_page,
+    redirect_to_view_page,
+    redirect_to_login_page
+)
 from utils.logger_config import logger
 
 # The environment vars are getting loaded for the whole process of the app
@@ -54,6 +58,8 @@ def init_ui_state():
 
 
 if __name__ == "__main__":
+
+    redirect_to_login_page()
 
     # if the user visits for the first time,
     # we initialize the ui state.

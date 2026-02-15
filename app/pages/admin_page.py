@@ -29,7 +29,8 @@ from utils.components import (
 )
 from utils.redirections import (
     redirect_to_respond_page,
-    redirect_to_results_page
+    redirect_to_results_page,
+    redirect_to_login_page
 )
 
 current_page = "admin_page"
@@ -69,6 +70,7 @@ def restart_questionnaire_ui_state():
 
 
 if __name__ == "__main__":
+    redirect_to_login_page()
 
     menu(client)
     if st.session_state.last_page != current_page:

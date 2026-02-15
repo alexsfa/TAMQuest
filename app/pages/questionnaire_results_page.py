@@ -20,6 +20,7 @@ from utils.questionnaire_scoring import (
     plot_spearman_by_response,
     plot_pvalue_rows
 )
+from utils.redirections import redirect_to_login_page
 
 basic_constructs = [
     "Perceived Usefulness",
@@ -29,6 +30,8 @@ basic_constructs = [
 ]
 
 if __name__ == "__main__":
+
+    redirect_to_login_page()
 
     menu(client)
 

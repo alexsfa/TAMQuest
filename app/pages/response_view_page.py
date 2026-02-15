@@ -7,8 +7,11 @@ from services.response_services import retrieve_response_info
 from utils.menu import menu
 from utils.logger_config import logger
 from utils.components import format_time, set_answer_layout
+from utils.redirections import redirect_to_login_page
 
 if __name__ == "__main__":
+
+    redirect_to_login_page()
 
     menu(client)
     response_info = retrieve_response_info(

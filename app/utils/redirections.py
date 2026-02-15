@@ -47,3 +47,15 @@ and redirects to response view page
 def redirect_to_view_page(response_id: str):
     st.session_state["current_response_id"] = response_id
     st.switch_page("pages/response_view_page.py")
+
+
+'''
+The redirect_to_login_page function checks the role of session state
+to rediret to login page
+'''
+
+
+def redirect_to_login_page():
+    if "role" not in st.session_state:
+        st.switch_page("pages/login_page.py")
+

@@ -54,8 +54,8 @@ def create_questionnaire_card(questionnaire: dict):
 
     title_safe = html.escape(questionnaire['title'])
 
-    if questionnaire["details"] == "":
-        details_safe = "No details were provided."
+    if questionnaire["details"] is None:
+        details_safe = html.escape("No details were provided.")
     else:
         details_safe = html.escape(questionnaire['details'])
 

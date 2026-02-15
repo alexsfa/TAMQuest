@@ -19,9 +19,12 @@ from services.questionnaire_services import (
 from utils.menu import menu
 from utils.logger_config import logger
 from utils.components import format_time, set_response_ui
+from utils.redirections import redirect_to_login_page
 
 
 if __name__ == "__main__":
+
+    redirect_to_login_page()
 
     menu(client)
 
@@ -82,7 +85,7 @@ if __name__ == "__main__":
 
     st.title(questionnaire_title)
 
-    if questionnaire_details == "":
+    if questionnaire_details is None:
         st.write("No further details were provided")
     else:
         st.write(questionnaire_details)

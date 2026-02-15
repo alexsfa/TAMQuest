@@ -10,7 +10,8 @@ from utils.components import (
 )
 from utils.redirections import (
     redirect_to_view_page,
-    redirect_to_edit_page
+    redirect_to_edit_page,
+    redirect_to_login_page
 )
 
 current_page = "profile_page"
@@ -28,6 +29,8 @@ def restart_profile_ui_state():
 
 
 if __name__ == "__main__":
+
+    redirect_to_login_page()
 
     menu(client)
     if st.session_state.last_page != current_page:

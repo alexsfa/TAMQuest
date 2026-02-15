@@ -3,6 +3,10 @@ import streamlit as st
 from app import profiles_repo, logger
 from utils.components import create_profile_form
 
+from utils.redirections import redirect_to_login_page
+
+redirect_to_login_page()
+
 st.title("Create your profile")
 profile_inputs = create_profile_form("insert")
 
